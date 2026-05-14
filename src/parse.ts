@@ -37,6 +37,10 @@ const HARNESS_TAGS = [
   "command-args",
   "local-command-stdout",
   "local-command-stderr",
+  "task-notification",
+  "bash-input",
+  "bash-stdout",
+  "bash-stderr",
 ];
 const HARNESS_TAG_RE = new RegExp(
   `<(${HARNESS_TAGS.join("|")})\\b[^>]*>[\\s\\S]*?<\\/\\1>`,

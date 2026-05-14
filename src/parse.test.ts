@@ -192,6 +192,33 @@ describe("parseJsonl", () => {
     expect(events[0]?.text).toBe("alpha\n\nomega");
   });
 
+  it("strips additional harness tags discovered in real logs (task-notification, bash-*)", () => {
+    const content = [
+      JSON.stringify({
+        message: {
+          role: "user",
+          content:
+            "alpha <task-notification>sub-agent done</task-notification> beta",
+        },
+      }),
+      JSON.stringify({
+        message: {
+          role: "user",
+          content:
+            "x <bash-input>ls -la</bash-input>" +
+            "<bash-stdout>total 42</bash-stdout>" +
+            "<bash-stderr>permission denied</bash-stderr> y",
+        },
+      }),
+    ].join("\n");
+
+    const events = parseJsonl(content);
+    expect(events.map((e) => e.text)).toEqual([
+      "alpha  beta",
+      "x  y",
+    ]);
+  });
+
   it("extracts usage.input_tokens / output_tokens when present (GAP-004)", () => {
     const content = JSON.stringify({
       message: {
