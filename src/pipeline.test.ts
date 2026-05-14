@@ -120,6 +120,42 @@ describe("pipeline.run — speaker split", () => {
     ]);
   });
 
+  it("denoises pasted code blocks before tokenizing (GAP-002)", async () => {
+    // Replace the seeded session with one where the user pasted a code blob.
+    const projects = join(homeDir, ".claude", "projects", "sample");
+    writeFileSync(
+      join(projects, "session.jsonl"),
+      jsonl(
+        {
+          message: {
+            role: "user",
+            content:
+              "what is happening here\n```ts\nimport { foo } from './src/foo.ts';\nconst paste = paste;\n```\nany ideas",
+          },
+          timestamp: "2026-01-01T00:00:00Z",
+        },
+        {
+          message: {
+            role: "assistant",
+            content: "looking",
+          },
+          timestamp: "2026-01-01T00:00:01Z",
+        },
+      ),
+    );
+
+    const result = await run();
+    const html = await readFile(result.outPath!, "utf8");
+    const data = extractData(html);
+    const userWords = data.topUser.map((p) => p[0]);
+
+    expect(userWords).not.toContain("src");
+    expect(userWords).not.toContain("import");
+    expect(userWords).not.toContain("paste");
+    expect(userWords).toContain("happening");
+    expect(userWords).toContain("ideas");
+  });
+
   it("does not buffer all events in memory (regression guard for memory shape)", () => {
     const source = readFileSync(
       new URL("./pipeline.ts", import.meta.url),

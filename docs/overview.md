@@ -45,6 +45,7 @@ active development — MVP (F1 `mvp-wordcloud`) shipped end-to-end; F2–F7 road
 | --- | --- |
 | `src/aggregate.ts` | Frequency `Map<string, number>` + `topN(map, n)` with count-desc / token-asc tie-break. |
 | `src/cli.ts` | Entrypoint with shebang (banner via tsup). Awaits `pipeline.run`, opens the result HTML, writes status to stderr on empty/missing logs. |
+| `src/denoise.ts` | Markdown code stripper. `denoiseMarkdown(text)` removes fenced ``` blocks (terminated + unterminated), 4-space-indented code blocks (CommonMark-style: blank line above), and inline `` `code` `` spans. Run before tokenize so pasted code/JSON doesn't swamp frequency counts (GAP-002). Prose untouched. |
 | `src/discover.ts` | Recursive readdir of `~/.claude/projects/` + stat per file. Returns sorted `{path, size}[]`. ENOENT → `[]`. |
 | `src/parse.ts` | JSONL → LogEvents. Exposes `parseLine(line)` (canonical primitive) and `parseJsonl(content)` (wrapper). Skips `isMeta: true`. Strips harness tag bodies (`system-reminder`, `command-*`, `local-command-stdout/stderr`, `task-notification`, `bash-*`). Extracts `usage.input_tokens`/`output_tokens` when present. Tolerant: malformed lines, unknown roles, post-strip-empty text → null. |
 | `src/pipeline.ts` | Orchestrator: discover → stream → tokenize-and-fold into per-role frequency Maps → topN → render → write. Accumulates messages, token sums, and min/max timestamp inline. Returns `{outPath}` or `{outPath: null, reason}`. |
@@ -66,6 +67,9 @@ discover.ts            (sorted {path, size}[] + totalBytes; ENOENT → [])
 stream.ts (readline)   ── onProgress(bytesDone, fileIdx) ─▶ progress.ts → stderr (TTY only)
         │
         ▼ (yield LogEvent per line; BUG-001 filters applied inside parseLine)
+denoise.ts             (strip fenced/indented/inline markdown code per event; GAP-002)
+        │
+        ▼
 pipeline.ts fold       userMap[token]++ / claudeMap[token]++
                        meta.messages++ ; meta.tokensIn / tokensOut += usage
                        meta.minTs / maxTs from event timestamps

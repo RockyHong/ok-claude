@@ -39,22 +39,14 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 - **Surfaced during:** F3 wet-run inspection.
 - **Proposed fix (design call needed):** options —
   1. Whitelist single-char Latin interjections (`y`, `n`, `k`) — explicit, narrow, easy to defend.
-  2. Drop length filter entirely, lean on stopword set + GAP-002 paste denoise to control noise — riskier, depends on GAP-002 landing first.
-  3. Context-aware filter — only drop short Latin INSIDE pasted code blocks (overlaps GAP-002 scope).
-- **Open:** is "y" alone meaningful enough to ship, or is "yeah"/"yes" the real signal? Check post-GAP-002 data before picking.
-- **Depends on:** GAP-002 should ship first — paste denoise may make option (2) viable. Evaluate options on clean data.
-
-### GAP-002 — denoise pasted code blocks before tokenization
-
-- **Area:** `src/tokenize.ts` (or new pre-tokenize step in `src/pipeline.ts`)
-- **Why it matters:** users paste JSON / Stack Overflow answers / code into Claude Code. Pasted blobs dominate frequency counts (e.g. `"id"` repeating 200× in one paste swamps user-typed vocabulary). Wordcloud reflects the paste, not the conversation. **F3 wet-run evidence:** "src" appears in "You" tab top words (user never typed it, comes from pasted code paths like `src/foo.ts`, `import "./src/..."`). User-typed words like "WTH", "ok" buried by paste volume. Priority elevated.
-- **Surfaced during:** F2 brainstorm (counting-rule discussion). Confirmed during F3 wet-run.
-- **Proposed fix:** strip fenced code blocks (```` ``` ````) and indented code blocks from message text before tokenizing. Also consider stripping inline `` `code` `` spans. Leave prose intact.
-- **Open:** whether to also detect non-fenced pasted blobs (long whitespace-uniform stretches). Probably overkill — solve fenced case first, revisit with real data.
+  2. Drop length filter entirely, lean on stopword set + paste denoise to control noise — riskier; now testable since GAP-002 denoise shipped.
+  3. Context-aware filter — only drop short Latin INSIDE pasted code blocks (overlapping work already done by denoise).
+- **Open:** is "y" alone meaningful enough to ship, or is "yeah"/"yes" the real signal? Check post-denoise data now that GAP-002 landed.
+- **Unblocked:** GAP-002 paste denoise shipped — evaluate options on clean data.
 
 ### GAP-003 — revisit per-occurrence vs per-message counting
 
 - **Area:** `src/aggregate.ts` (or upstream in pipeline)
 - **Why it matters:** current rule = every token instance counts. "ok claude ok claude" in one message = 2. Preserves intensity (matches brand). But amplifies any per-message repetition pathology. Once GAP-002 ships, re-evaluate whether per-message dedup or a per-message cap improves signal.
-- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until GAP-002 (denoise pasted code blocks) ships — paste blobs are the real noise driver that motivated the worry, so judge the counting rule on post-denoise data.
+- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until paste-denoise ships — paste blobs were the real noise driver that motivated the worry. GAP-002 denoise shipped; re-evaluate now on post-denoise data.
 - **Proposed fix (if revisited):** per-message cap at N occurrences, or per-message dedup. Pick after data, not speculation.

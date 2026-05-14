@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
+import { denoiseMarkdown } from "./denoise.js";
 import { tokenize } from "./tokenize.js";
 import { topN } from "./aggregate.js";
 import { renderHtml } from "./render.js";
@@ -37,7 +38,7 @@ export async function run(): Promise<RunResult> {
 
   for await (const e of streamEvents(files, progress.tick)) {
     const map = e.role === "user" ? userMap : claudeMap;
-    for (const tok of tokenize(e.text)) {
+    for (const tok of tokenize(denoiseMarkdown(e.text))) {
       map.set(tok, (map.get(tok) ?? 0) + 1);
     }
     messages++;
