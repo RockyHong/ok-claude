@@ -1,6 +1,9 @@
 const FENCED_BLOCK = /```[\s\S]*?```/g;
 const UNTERMINATED_FENCE = /```[\s\S]*$/;
 const INLINE_BACKTICK = /`[^`\n]*`/g;
+// Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
+// "don't" matches as (n)'t → keeps "don", drops "'t" — same handling as 's/'re/'d.
+const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;
 
 export function denoiseMarkdown(text: string): string {
   if (!text) return text;
@@ -9,6 +12,7 @@ export function denoiseMarkdown(text: string): string {
   out = out.replace(UNTERMINATED_FENCE, " ");
   out = stripIndentedBlocks(out);
   out = out.replace(INLINE_BACKTICK, " ");
+  out = out.replace(CLITIC, "$1");
   return out;
 }
 

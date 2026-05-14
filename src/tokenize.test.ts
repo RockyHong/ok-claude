@@ -46,4 +46,9 @@ describe("tokenize", () => {
     expect(tokens).toContain("あ");
     expect(tokens).toContain("ア");
   });
+
+  it("drops pure multi-digit tokens (10, 2026, 200000)", () => {
+    const tokens = tokenize("year 2026 line 10 size 200000 word");
+    expect(tokens).toEqual(["year", "line", "size", "word"]);
+  });
 });

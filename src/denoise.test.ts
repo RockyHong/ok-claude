@@ -97,4 +97,38 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("x");
     expect(out).toContain("y");
   });
+
+  it("normalizes 're clitic (we're → we)", () => {
+    expect(denoiseMarkdown("we're going")).toBe("we going");
+  });
+
+  it("normalizes 's clitic (it's → it)", () => {
+    expect(denoiseMarkdown("it's fine")).toBe("it fine");
+  });
+
+  it("normalizes n't clitic (don't → don)", () => {
+    expect(denoiseMarkdown("don't worry")).toBe("don worry");
+  });
+
+  it("normalizes 'd / 'm / 've / 'll clitics", () => {
+    expect(denoiseMarkdown("I'd I'm I've I'll")).toBe("I I I I");
+  });
+
+  it("normalizes curly apostrophe clitics (U+2019)", () => {
+    expect(denoiseMarkdown("we’re don’t it’s")).toBe(
+      "we don it",
+    );
+  });
+
+  it("leaves bare apostrophes / quoted strings alone", () => {
+    const out = denoiseMarkdown("she said 'hello' to me");
+    expect(out).toContain("hello");
+    expect(out).toContain("she said");
+  });
+
+  it("does not strip clitic-looking suffix without leading letter", () => {
+    // "'re" with no preceding letter shouldn't be touched as clitic
+    const out = denoiseMarkdown(" 're alone");
+    expect(out).toContain("'re");
+  });
 });

@@ -3,3 +3,5 @@ dist/
 ok-claude-output.html
 *.log
 .DS_Store
+scripts/
+

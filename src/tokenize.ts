@@ -22,6 +22,7 @@ export function tokenize(text: string): string[] {
     const isCjk = CJK_SCRIPT.test(lower);
 
     if (!isCjk && [...lower].length < 2) continue;
+    if (/^\d+$/.test(lower)) continue;
     if (STOPWORDS.has(lower)) continue;
 
     out.push(lower);
