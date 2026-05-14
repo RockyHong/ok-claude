@@ -5,29 +5,36 @@ const VENDOR_JS = readFileSync(
   "utf8",
 );
 
-export type RenderMeta = {
-  sessions: number;
-  dateRange: [string, string] | null;
+export type RenderInput = {
+  topUser: Array<[string, number]>;
+  topClaude: Array<[string, number]>;
+  meta: {
+    sessions: number;
+    messages: number;
+    dateRange: [string, string] | null;
+  };
 };
 
 function safeJson(value: unknown): string {
   return JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1");
 }
 
-function formatSubhead(meta: RenderMeta): string {
+function formatSubhead(meta: RenderInput["meta"]): string {
   const range = meta.dateRange
     ? ` · ${meta.dateRange[0]} → ${meta.dateRange[1]}`
     : "";
-  const noun = meta.sessions === 1 ? "session" : "sessions";
-  return `${meta.sessions} ${noun} scanned${range}`;
+  const sNoun = meta.sessions === 1 ? "session" : "sessions";
+  const mNoun = meta.messages === 1 ? "message" : "messages";
+  return `${meta.sessions} ${sNoun} · ${meta.messages} ${mNoun}${range}`;
 }
 
-export function renderHtml(
-  topNData: Array<[string, number]>,
-  meta: RenderMeta,
-): string {
-  const dataJson = safeJson({ topN: topNData, meta });
-  const subhead = formatSubhead(meta);
+export function renderHtml(input: RenderInput): string {
+  const dataJson = safeJson({
+    topUser: input.topUser,
+    topClaude: input.topClaude,
+    meta: input.meta,
+  });
+  const subhead = formatSubhead(input.meta);
 
   return `<!doctype html>
 <html lang="en">
@@ -64,7 +71,8 @@ ${VENDOR_JS}
 <script>
 (function boot() {
   var data = window.__DATA__;
-  if (!data || !Array.isArray(data.topN) || data.topN.length === 0) {
+  var list = (data && Array.isArray(data.topUser)) ? data.topUser : [];
+  if (list.length === 0) {
     document.getElementById('cloud-wrap').innerHTML = '<p style="padding:2rem;color:#8a939b">No words to render.</p>';
     return;
   }
@@ -78,8 +86,8 @@ ${VENDOR_JS}
     canvas.style.height = wrap.clientHeight + 'px';
   }
   resize();
-  var max = data.topN[0][1];
-  var weighted = data.topN.map(function (pair) {
+  var max = list[0][1];
+  var weighted = list.map(function (pair) {
     var ratio = pair[1] / max;
     var size = 12 + Math.round(ratio * 80);
     return [pair[0], size];

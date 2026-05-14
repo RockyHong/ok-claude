@@ -25,6 +25,17 @@ function dateRangeOf(events: LogEvent[]): [string, string] | null {
   return [min, max];
 }
 
+function topForRole(
+  events: LogEvent[],
+  role: "user" | "assistant",
+): Array<[string, number]> {
+  const text = events
+    .filter((e) => e.role === role)
+    .map((e) => e.text)
+    .join("\n");
+  return topN(aggregate(tokenize(text)), TOP_N);
+}
+
 export async function run(): Promise<RunResult> {
   const files = await discoverLogs();
   if (files.length === 0) {
@@ -45,14 +56,17 @@ export async function run(): Promise<RunResult> {
     for (const e of parseJsonl(content)) events.push(e);
   }
 
-  const combinedText = events.map((e) => e.text).join("\n");
-  const tokens = tokenize(combinedText);
-  const freq = aggregate(tokens);
-  const top = topN(freq, TOP_N);
+  const topUser = topForRole(events, "user");
+  const topClaude = topForRole(events, "assistant");
 
-  const html = renderHtml(top, {
-    sessions: files.length,
-    dateRange: dateRangeOf(events),
+  const html = renderHtml({
+    topUser,
+    topClaude,
+    meta: {
+      sessions: files.length,
+      messages: events.length,
+      dateRange: dateRangeOf(events),
+    },
   });
 
   const outPath = resolve(process.cwd(), OUTPUT_FILE);
