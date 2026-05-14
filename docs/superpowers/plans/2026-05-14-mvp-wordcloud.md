@@ -26,15 +26,15 @@
 
 ### Task 3: `parse.ts` — JSONL → events
 
-- [ ] Type `LogEvent = { role: "user" | "assistant"; text: string; timestamp?: string }`.
-- [ ] Function `parseJsonl(content: string): LogEvent[]` — split on `\n`, JSON.parse each line in `try/catch`, extract `message.role` + concat all `content[].text` blocks (or use `content` directly if string).
-- [ ] Skip lines where role ∉ `{ user, assistant }` or text is empty.
-- [ ] Tests (vitest) in `src/parse.test.ts`:
+- [x] Type `LogEvent = { role: "user" | "assistant"; text: string; timestamp?: string }`.
+- [x] Function `parseJsonl(content: string): LogEvent[]` — split on `\n`, JSON.parse each line in `try/catch`, extract `message.role` + concat all `content[].text` blocks (or use `content` directly if string).
+- [x] Skip lines where role ∉ `{ user, assistant }` or text is empty.
+- [x] Tests (vitest) in `src/parse.test.ts`:
   - well-formed user + assistant lines → 2 events
   - malformed JSON line → skipped, no throw
   - line w/ unknown role → skipped
   - content as string vs content as array of `{type:"text",text}` blocks — both yield text
-- [ ] Commit: `feat(parse): tolerant JSONL event extractor`.
+- [x] Commit: `feat(parse): tolerant JSONL event extractor`.
 
 ### Task 4: `tokenize.ts` — Intl.Segmenter wrapper
 
