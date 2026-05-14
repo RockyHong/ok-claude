@@ -43,13 +43,15 @@ active development — MVP (F1 `mvp-wordcloud`) shipped end-to-end; F2–F7 road
 
 | Path | Role |
 | --- | --- |
-| `src/cli.ts` | Entrypoint with shebang (banner via tsup). Awaits `pipeline.run`, opens the result HTML, writes status to stderr on empty/missing logs. |
-| `src/pipeline.ts` | Orchestrator: discover → read → parse → partition by role → per-speaker tokenize/aggregate/topN → render → write. Returns `{ outPath }` or `{ outPath: null, reason }`. Surfaces both `topUser` and `topClaude` plus `meta.messages` into render. |
-| `src/discover.ts` | Recursive `readdir` of `~/.claude/projects/`. Filters to `.jsonl`, sorted. ENOENT → `[]`. |
-| `src/parse.ts` | JSONL → `LogEvent[]`. Tolerant: skips malformed lines, unknown roles, empty text. Accepts content as string or as array of `{type:"text",text}` blocks. |
-| `src/tokenize.ts` | `Intl.Segmenter` word tokenizer. Lowercases via `toLocaleLowerCase`, keeps `isWordLike`, drops single-char Latin/digits, keeps single-char CJK (Han / Hiragana / Katakana / Hangul), filters a small English stopword set. |
 | `src/aggregate.ts` | Frequency `Map<string, number>` + `topN(map, n)` with count-desc / token-asc tie-break. |
-| `src/render.ts` | HTML template. Inlines vendored `wordcloud2.js` and a single `<canvas>`; emits two tab buttons (You / Claude) and a click handler that swaps the canvas content between `topUser` and `topClaude`. Per-tab empty-state when a speaker has no tokens. JSON-encodes `{ topUser, topClaude, meta }` into `window.__DATA__`. |
+| `src/cli.ts` | Entrypoint with shebang (banner via tsup). Awaits `pipeline.run`, opens the result HTML, writes status to stderr on empty/missing logs. |
+| `src/discover.ts` | Recursive readdir of `~/.claude/projects/` + stat per file. Returns sorted `{path, size}[]`. ENOENT → `[]`. |
+| `src/parse.ts` | JSONL → LogEvents. Exposes `parseLine(line)` (canonical primitive) and `parseJsonl(content)` (wrapper). Skips `isMeta: true`. Strips harness tag bodies (`system-reminder`, `command-*`, `local-command-stdout/stderr`, `task-notification`, `bash-*`). Extracts `usage.input_tokens`/`output_tokens` when present. Tolerant: malformed lines, unknown roles, post-strip-empty text → null. |
+| `src/pipeline.ts` | Orchestrator: discover → stream → tokenize-and-fold into per-role frequency Maps → topN → render → write. Accumulates messages, token sums, and min/max timestamp inline. Returns `{outPath}` or `{outPath: null, reason}`. |
+| `src/progress.ts` | TTY-gated stderr progress bar. `createProgress(totalBytes, fileCount)` returns `{tick, done}`. No-op when stderr is piped — CI-safe. |
+| `src/render.ts` | HTML template. Inlines vendored `wordcloud2.js` and a single `<canvas>`; emits two tab buttons (You / Claude) with click-driven canvas swap. Per-tab empty-state. Subhead surfaces real token totals (K/M humanized), session + message counts, and date range. JSON-encodes `{topUser, topClaude, meta}` into `window.__DATA__`. |
+| `src/stream.ts` | Side-effect tier. Reads each `.jsonl` via `readline`, yields `LogEvent`s through `parseLine`, fires `onProgress` after each file close. Per-file read errors are logged to stderr; stream continues. |
+| `src/tokenize.ts` | `Intl.Segmenter` word tokenizer. Lowercases via `toLocaleLowerCase`, keeps `isWordLike`, drops single-char Latin/digits, keeps single-char CJK (Han / Hiragana / Katakana / Hangul), filters a small English stopword set. |
 | `src/vendor/wordcloud2.js` | Vendored library, copied at repo time. tsup `onSuccess` mirrors `dist/vendor/wordcloud2.js` next to the built CLI so `import.meta.url` resolves in both source and bundle. |
 
 ## Data Flow
@@ -58,26 +60,29 @@ active development — MVP (F1 `mvp-wordcloud`) shipped end-to-end; F2–F7 road
 ~/.claude/projects/**/*.jsonl
         │
         ▼
-discover.ts         (sorted .jsonl paths; ENOENT → [])
+discover.ts            (sorted {path, size}[] + totalBytes; ENOENT → [])
         │
         ▼
-fs.readFile + parse.ts        (JSONL line → LogEvent { role, text, timestamp? })
+stream.ts (readline)   ── onProgress(bytesDone, fileIdx) ─▶ progress.ts → stderr (TTY only)
+        │
+        ▼ (yield LogEvent per line; BUG-001 filters applied inside parseLine)
+pipeline.ts fold       userMap[token]++ / claudeMap[token]++
+                       meta.messages++ ; meta.tokensIn / tokensOut += usage
+                       meta.minTs / maxTs from event timestamps
         │
         ▼
-partition by role   (user events / assistant events)
+topN(userMap, 100)     topN(claudeMap, 100)
         │
-        ├──▶ tokenize → aggregate → topN(100)  →  topUser
+        ▼
+render.ts              (inlines vendor + both topN + meta → self-contained HTML)
         │
-        └──▶ tokenize → aggregate → topN(100)  →  topClaude
-                                                       │
-                                                       ▼
-                              render.ts           (inlines vendor + both topN + meta → self-contained HTML with You/Claude tabs)
-                                                       │
-                                                       ▼
-                              ./ok-claude-output.html   →   open(outPath)
+        ▼
+./ok-claude-output.html   →   open(outPath)
 ```
 
 Empty / missing logs root short-circuits at `discover.ts` — pipeline returns `{ outPath: null, reason }`; CLI writes the reason to stderr and exits without launching the browser.
+
+Memory ceiling under streaming = vocab `Map` size (bounded by unique tokens) plus a single in-flight line buffer. No whole-corpus arrays, no per-role joined strings — F3 ships the all-time scope (Non-Negotiable #4) without hitting the V8 `String` length cap.
 
 ## Key Boundaries
 
