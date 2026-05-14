@@ -1,5 +1,5 @@
 import { defineConfig } from "tsup";
-import { chmod } from "node:fs/promises";
+import { chmod, cp, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 export default defineConfig({
@@ -14,8 +14,12 @@ export default defineConfig({
   minify: false,
   shims: false,
   banner: { js: "#!/usr/bin/env node" },
-  loader: { ".js": "text" },
   async onSuccess() {
+    await mkdir(join("dist", "vendor"), { recursive: true });
+    await cp(
+      join("src", "vendor", "wordcloud2.js"),
+      join("dist", "vendor", "wordcloud2.js"),
+    );
     if (process.platform !== "win32") {
       await chmod(join("dist", "cli.js"), 0o755);
     }

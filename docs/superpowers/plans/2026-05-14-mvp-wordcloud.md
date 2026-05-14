@@ -72,16 +72,16 @@
 
 ### Task 7: `render.ts` — HTML template
 
-- [ ] Function `renderHtml(topNData: Array<[string, number]>, meta: { sessions: number; dateRange: [string, string] | null }): string`.
-- [ ] Read vendored `src/vendor/wordcloud2.js` as string (use `import.meta.url` + `fs.readFile`, or bundle as string via tsup's `loader: { ".js": "text" }`).
-- [ ] String-interpolate into template:
+- [x] Function `renderHtml(topNData: Array<[string, number]>, meta: { sessions: number; dateRange: [string, string] | null }): string`.
+- [x] Read vendored `src/vendor/wordcloud2.js` as string via `fs.readFileSync(new URL("./vendor/wordcloud2.js", import.meta.url))`. tsup `onSuccess` copies the vendor dir alongside `dist/cli.js` so the bundled CLI resolves it at runtime.
+- [x] String-interpolate into template:
   - `<style>` block (pure CSS — viewport-fitting canvas, header layout).
   - Inlined `wordcloud2.js` content inside `<script>`.
   - Data as `<script>window.__DATA__ = {topN: [...], meta: {...}};</script>`.
   - Boot script that calls `WordCloud(document.getElementById('cloud'), { list: window.__DATA__.topN, ... })`.
-- [ ] No external URLs. No `fetch`. No CDN.
-- [ ] Tests in `src/render.test.ts` — `renderHtml([["foo",3],["bar",1]], {sessions:1,dateRange:null})` returns a string containing `<canvas`, `WordCloud(`, the literal `"foo"` and `"bar"`, the vendored library marker (e.g., `// wordcloud2.js`).
-- [ ] Commit: `feat(render): self-contained HTML template w/ inlined wordcloud2`.
+- [x] No external URLs. No `fetch`. No CDN.
+- [x] Tests in `src/render.test.ts` — covers canvas/WordCloud presence, foo/bar literals, vendor marker, no-CDN guard, `</script>` escape in user-derived strings.
+- [x] Commit: `feat(render): self-contained HTML template w/ inlined wordcloud2`.
 
 ### Task 8: `pipeline.ts` + `cli.ts` — orchestrate
 
