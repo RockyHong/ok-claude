@@ -32,13 +32,17 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
-### GAP-008 — research CC session-log schema (truth, not guessing)
+### GAP-009 — apply cc-log-schema findings to `parse.ts` + `discover.ts`
 
 - **Area:** `src/parse.ts`, `src/discover.ts`
-- **Why it matters:** every leak fix this session was discovered by spelunking real `~/.claude/projects/` files and inferring schema fields (`isMeta`, `isCompactSummary`, `isSidechain`, `isVisibleInTranscriptOnly`, `parentUuid`, nested `<session>/subagents/` tree). Found two latent bugs (BUG-002 subagent path, BUG-003 compact-summary) only because we got lucky reading the right file. Other leak markers (e.g. tool-call wrapping flags, hook injections, MCP-server outputs) probably exist and we'd find them the same hard way.
-- **Proposed fix:** find authoritative reference for the CC session-log JSONL schema. Sources to check: (a) Claude Code public docs, (b) `anthropics/claude-code` GitHub if open-source, (c) community wikis / reverse-engineering writeups, (d) `claude-config-manager` skill catalog, (e) `~/.claude/CHANGELOG`-style metadata. Output: a short reference in `docs/cc-log-schema.md` listing every line-level flag we should consider filtering and what each means.
-- **Also search:** does the broader community (e.g. `WhatDidClaudeSay` repo in user's logs, `Claudia`, similar tools) already solve this prose-extraction problem more cleanly? Don't reinvent if a battle-tested schema-walker exists.
-- **Surfaced during:** GAP-002 → BUG-002 → BUG-003 chain in this session. User intuition: "stop guessing, solve by real truth of structure."
+- **Why it matters:** GAP-008 landed `docs/cc-log-schema.md` — the empirical+community-verified per-line schema. Audit surfaced two concrete prose-gating leaks the current parser does not handle:
+  1. **`isSidechain: true` leak (huge).** 45% of `user` lines (24,942) and 44% of `assistant` lines (33,772) in the local 235k-line probe carry `isSidechain: true`. These are inline subagent/Task dispatch transcripts — LLM-to-LLM prose, not human typing. Current `discover.ts` only filters subagents stored as separate files under `subagents/`; inline sidechains inside main session files all leak through. Likely the single biggest noise source still in the wordcloud.
+  2. **`isApiErrorMessage: true` leak (small).** 50 assistant lines flagged as rate-limit / server-error stubs (status 429 / 529). Low volume but trivially droppable.
+  3. **Type-whitelist gap.** Today `parse.ts` survives noisy line types (`attachment`, `system`, `progress`, `last-prompt`, …) only by accident — the role check on `message.role` happens to fail when the line shape lacks a `message` field. Brittle. Replace with positive whitelist: `type === "user" || type === "assistant"`.
+  4. **`isVisibleInTranscriptOnly: true` redundant gate.** Always co-occurs with `isCompactSummary: true` (88/88 paired). Drop adds belt-and-suspenders against version drift; near-zero risk.
+- **Proposed fix:** add the four gates in `parse.ts` line-skip block in the order specified in `docs/cc-log-schema.md` § "Recommended prose-gating filter". TDD per CLAUDE.md — fixtures for each flag using the anonymized samples already in the schema doc. No `discover.ts` change needed (subagent path filter still correct).
+- **Surfaced during:** GAP-008 schema research session.
+- **Depends on:** none. Ready to pick up.
 
 ### GAP-007 — non-fenced error/log paste denoise (real-data TDD fixtures)
 

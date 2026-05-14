@@ -164,6 +164,7 @@ npm publish         # publishes to npm registry
 
 - [`docs/overview.md`](docs/overview.md) — product context, data flow, module index. Skeleton seeded at scaffold; grown sections fill via doc-sync.
 - [`docs/techstack.md`](docs/techstack.md) — stack, architecture rules, coding patterns. Skeleton seeded at scaffold; grown sections fill via doc-sync.
+- [`docs/cc-log-schema.md`](docs/cc-log-schema.md) — empirical + community-verified reference for the Claude Code session-log JSONL format. Authoritative for prose-extraction filters (line types, boolean flags, content blocks). Re-probe on suspected version drift.
 - [`docs/backlog.md`](docs/backlog.md) — deferred items (`BUG-###` / `DEBT-###` / `GAP-###`), deleted on resolve.
 - `docs/superpowers/specs/` — design specs from brainstorming (temporal — deleted after merge)
 - `docs/superpowers/plans/` — implementation plans (temporal — deleted after merge)
