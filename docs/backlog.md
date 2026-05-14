@@ -89,9 +89,12 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 - **Proposed fix (when revisited):** re-survey the user on actual typing patterns AFTER GAP-010/GAP-011 land — at that point the residual counts reflect real prose, not paste leaks. Adjust contract thresholds or drop tokens that conflict with reality. Possibly stop encoding self-report at all; eyeball wordcloud output (`ok-claude-output.html`) as the success metric.
 - **Surfaced during:** GAP-009 wrap-up.
 
-### GAP-003 — revisit per-occurrence vs per-message counting
+### GAP-003 — per-message dedup vs per-occurrence counting
 
-- **Area:** `src/aggregate.ts` (or upstream in pipeline)
-- **Why it matters:** current rule = every token instance counts. "ok claude ok claude" in one message = 2. Preserves intensity (matches brand). But amplifies any per-message repetition pathology. Once GAP-002 ships, re-evaluate whether per-message dedup or a per-message cap improves signal.
-- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until paste-denoise ships — paste blobs were the real noise driver that motivated the worry. GAP-002 denoise shipped; re-evaluate now on post-denoise data.
-- **Proposed fix (if revisited):** per-message cap at N occurrences, or per-message dedup. Pick after data, not speculation.
+- **Area:** `src/pipeline.ts` (fold step) — gate at the `LogEvent` boundary, before tokens enter the per-role Map.
+- **Why it matters:** current rule = every token instance counts. "ok claude ok claude" in one message = 2. Paste-heavy messages still inflate even after GAP-009 D2 / GAP-010 / GAP-011: a single paste with 20 `src` mentions counts 20, drowning a single deliberate use elsewhere. Per-message dedup would collapse repetition pathology to one signal per message: `src` × 20 in one message → 1; `wth` × 1 → 1. Net effect: counts reflect "how many *distinct conversations* mentioned the token", not "how many times it physically appears across the corpus".
+- **Why this matters MORE after GAP-009:** sidechain + paste denoise are best-effort filters. Anything that leaks through still gets multiplied if user pasted heavy blobs. Dedup turns the leak from a count amplifier into a single rounding error per message.
+- **Brand tradeoff:** loses intensity signal — "ok claude ok claude" 5x in one rant collapses to 1, same as one terse "ok claude". Could mitigate via per-message cap (e.g., min(count_in_message, 3)) instead of full dedup. Pick after data.
+- **Surfaced during:** F2 brainstorm (deferred until paste-denoise shipped) + GAP-009 wrap-up (user observation: dedup would solve paste-leak amplification AND surface low-count memes like `wth` without rarity weighting).
+- **Proposed fix (when revisited):** in `pipeline.ts` fold, build a `Set<string>` per message of tokens-this-message; iterate the set into the role Map instead of iterating the raw token stream. One-line shape change. Compare top-100 before/after on real corpus — likely BIG re-rank.
+- **Bundling note:** consider running this after BUG-004 + GAP-010 + GAP-011 land so the dedup operates on cleaner per-message token sets. Alternatively run dedup FIRST to see how much of the residue noise it kills on its own — could shrink the scope of GAP-010/011.
