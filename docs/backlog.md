@@ -32,11 +32,23 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
+### GAP-005 — short-Latin filter drops legit interjections (`y`, `n`, `k`, `lol`-ish)
+
+- **Area:** `src/tokenize.ts` line ~24 (`if (!isCjk && [...lower].length < 2) continue;`)
+- **Why it matters:** F3 wet-run surfaced this — user reports saying "y" a lot, expects it in cloud, doesn't appear. Current rule drops ALL single-char Latin to kill code-variable noise (`i`, `j`, `x`). Collateral damage = legit interjections (`y`/`n` for yes/no, `k` for "ok"). Meme energy loss.
+- **Surfaced during:** F3 wet-run inspection.
+- **Proposed fix (design call needed):** options —
+  1. Whitelist single-char Latin interjections (`y`, `n`, `k`) — explicit, narrow, easy to defend.
+  2. Drop length filter entirely, lean on stopword set + GAP-002 paste denoise to control noise — riskier, depends on GAP-002 landing first.
+  3. Context-aware filter — only drop short Latin INSIDE pasted code blocks (overlaps GAP-002 scope).
+- **Open:** is "y" alone meaningful enough to ship, or is "yeah"/"yes" the real signal? Check post-GAP-002 data before picking.
+- **Depends on:** GAP-002 should ship first — paste denoise may make option (2) viable. Evaluate options on clean data.
+
 ### GAP-002 — denoise pasted code blocks before tokenization
 
 - **Area:** `src/tokenize.ts` (or new pre-tokenize step in `src/pipeline.ts`)
-- **Why it matters:** users paste JSON / Stack Overflow answers / code into Claude Code. Pasted blobs dominate frequency counts (e.g. `"id"` repeating 200× in one paste swamps user-typed vocabulary). Wordcloud reflects the paste, not the conversation.
-- **Surfaced during:** F2 brainstorm (counting-rule discussion). Decided not to fix counting semantics — attack the root cause instead.
+- **Why it matters:** users paste JSON / Stack Overflow answers / code into Claude Code. Pasted blobs dominate frequency counts (e.g. `"id"` repeating 200× in one paste swamps user-typed vocabulary). Wordcloud reflects the paste, not the conversation. **F3 wet-run evidence:** "src" appears in "You" tab top words (user never typed it, comes from pasted code paths like `src/foo.ts`, `import "./src/..."`). User-typed words like "WTH", "ok" buried by paste volume. Priority elevated.
+- **Surfaced during:** F2 brainstorm (counting-rule discussion). Confirmed during F3 wet-run.
 - **Proposed fix:** strip fenced code blocks (```` ``` ````) and indented code blocks from message text before tokenizing. Also consider stripping inline `` `code` `` spans. Leave prose intact.
 - **Open:** whether to also detect non-fenced pasted blobs (long whitespace-uniform stretches). Probably overkill — solve fenced case first, revisit with real data.
 
