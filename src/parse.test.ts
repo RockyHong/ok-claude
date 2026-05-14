@@ -132,4 +132,63 @@ describe("parseJsonl", () => {
 
     expect(events.map((e) => e.text)).toEqual(["human-typed line"]);
   });
+
+  it("strips harness tag bodies from extracted text", () => {
+    const lines = [
+      JSON.stringify({
+        message: {
+          role: "user",
+          content:
+            "before <system-reminder>noise inside</system-reminder> after",
+        },
+      }),
+      JSON.stringify({
+        message: {
+          role: "user",
+          content:
+            "wrap <command-name>/clear</command-name>" +
+            "<command-message>clear</command-message>" +
+            "<command-args></command-args> end",
+        },
+      }),
+      JSON.stringify({
+        message: {
+          role: "user",
+          content:
+            "out <local-command-stdout>hidden</local-command-stdout>" +
+            "<local-command-stderr>also</local-command-stderr> rest",
+        },
+      }),
+      JSON.stringify({
+        message: {
+          role: "user",
+          content: "<system-reminder>only noise</system-reminder>",
+        },
+      }),
+    ].join("\n");
+
+    const events = parseJsonl(lines);
+    const texts = events.map((e) => e.text);
+
+    expect(texts).toEqual([
+      "before  after",
+      "wrap  end",
+      "out  rest",
+    ]);
+    // Fourth line collapses to whitespace after strip → dropped entirely
+    expect(texts).toHaveLength(3);
+  });
+
+  it("strips multi-line tag bodies", () => {
+    const line = JSON.stringify({
+      message: {
+        role: "assistant",
+        content:
+          "alpha\n<system-reminder>\nline1\nline2\n</system-reminder>\nomega",
+      },
+    });
+
+    const events = parseJsonl(line);
+    expect(events[0]?.text).toBe("alpha\n\nomega");
+  });
 });

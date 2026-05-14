@@ -27,6 +27,23 @@ function extractText(content: string | RawContentBlock[] | undefined): string {
   return out;
 }
 
+const HARNESS_TAGS = [
+  "system-reminder",
+  "command-name",
+  "command-message",
+  "command-args",
+  "local-command-stdout",
+  "local-command-stderr",
+];
+const HARNESS_TAG_RE = new RegExp(
+  `<(${HARNESS_TAGS.join("|")})\\b[^>]*>[\\s\\S]*?<\\/\\1>`,
+  "g",
+);
+
+function stripHarnessTags(text: string): string {
+  return text.replace(HARNESS_TAG_RE, "");
+}
+
 export function parseLine(line: string): LogEvent | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
@@ -43,8 +60,9 @@ export function parseLine(line: string): LogEvent | null {
   const role = raw.message?.role;
   if (role !== "user" && role !== "assistant") return null;
 
-  const text = extractText(raw.message?.content);
-  if (!text) return null;
+  const rawText = extractText(raw.message?.content);
+  const text = stripHarnessTags(rawText);
+  if (!text.trim()) return null;
 
   const event: LogEvent = { role, text };
   if (typeof raw.timestamp === "string") event.timestamp = raw.timestamp;
