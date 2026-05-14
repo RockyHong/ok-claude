@@ -32,6 +32,18 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
+### BUG-001 — "You" tab includes harness-injected content, not just user typing
+
+- **Area:** `src/parse.ts` (filter strategy)
+- **Symptom (surfaced on F2 ship):** "You" tab's top words include `command`, `skill`, `docs`, `user` — these come from harness-injected text blocks (skill bodies, `<system-reminder>` blocks, `<command-name>` / `<command-message>` / `<local-command-stdout>` tags), not from what the user actually typed. Cloud reflects the harness as much as the human.
+- **Schema levers** (verified via JSONL probe on this repo's own logs):
+  - `isMeta: true` top-level flag marks injected lines (skill bodies via `Skill` tool, etc.) — currently NOT filtered.
+  - `toolUseResult` top-level field marks tool-result lines (role=user but content is tool output) — currently filtered indirectly because their content blocks are `type: "tool_result"`, which `extractText` already skips. ✓ OK.
+  - `<system-reminder>...</system-reminder>` and `<command-name>...</command-name>` / `<command-message>...</command-message>` / `<local-command-stdout>...</local-command-stdout>` tags are injected inline inside `type: "text"` blocks of role=user lines — NOT filtered.
+  - `isSidechain: true` marks sub-conversation lines — decide later whether to include/exclude.
+- **Proposed fix:** in `parse.ts`, (1) skip lines where `isMeta === true`, (2) strip the listed tag pairs and their inner content from text before yielding. Re-evaluate after running on real logs.
+- **Out of scope here:** Claude side may have similar but smaller pollution (thinking blocks, tool_use input). Probe before fixing.
+
 ### GAP-004 — extract real token counts from JSONL for subhead
 
 - **Area:** `src/parse.ts`, `src/pipeline.ts`, `src/render.ts`
