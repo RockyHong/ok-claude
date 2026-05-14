@@ -62,6 +62,41 @@ Post-fix corpus: 3,175 user msgs / 7,924 claude msgs; 7,337 unique user tokens /
 
 **Mechanism gate provisional read:** all three (Tasks 10, 11, 12) live. Final decision happens at Task 9 after the `scripts/vocab-contracts.ts` runner exists in Task 8.
 
+---
+
+## Mechanism gate (Task 9 result)
+
+`scripts/vocab-contracts.ts` first run captured at `tmp/vocab-contracts-before-mechanisms.txt`. 18 contracts, 2 PASS, 16 FAIL.
+
+| Contract | Status | Notes |
+|---|---|---|
+| never:mono | FAIL | count=406 rank=11 — main-convo paste residue |
+| never:jit | FAIL | count=313 rank=20 — same |
+| never:null | FAIL | count=266 rank=25 — TS lint / NullRef pastes |
+| never:program | FAIL | count=158 rank=60 — C# Program.cs stack frames |
+| never:gradle | FAIL | count=145 rank=65 — Android build log paste |
+| never:android | FAIL | count=131 rank=81 — Android build log paste |
+| never:bool | FAIL | count=129 rank=82 — TS type-error paste |
+| never:object | FAIL | count=125 rank=87 — TS type-error paste |
+| never:src | FAIL | count=115 rank=95 — path fragments in stack traces |
+| rarely:date | FAIL | rank=15 |
+| rarely:unity | FAIL | rank=17 — likely paste-driven, same class as NEVER |
+| rarely:then | PASS | rank=51 |
+| rarely:library | PASS | rank=96 |
+| frequent:y | FAIL | count=0 — single-char Latin drop pre-aggregate |
+| frequent:n | FAIL | count=0 — same |
+| frequent:k | FAIL | count=0 — same |
+| frequent:wth | FAIL | count=30 rank=479 — absolute-frequency ranking buries low-count meme |
+| frequent:soc | FAIL | count=83 rank=168 — same |
+
+**Mechanism tasks to run:**
+
+- [x] Task 10 (paste-denoise) — 9 NEVER + 2 RARELY contracts (date, unity) all point at non-fenced stack-trace / type-error blocks in main-convo prose. Strongest signal in this gate.
+- [x] Task 11 (short-Latin whitelist) — y / n / k contracts fail because tokenize.ts drops them pre-aggregate. Surgical fix.
+- [x] Task 12 (rarity weighting) — wth / soc exist but rank outside top-100. Task 12 confer step (A vs B) remains live in Task 12 § Step 1 — decision deferred to that point.
+
+No mechanism tasks skipped. Proceed to Task 10.
+
 **Observation:** The post-fix counts for `mono` / `jit` / `null` / `date` / `unity` are essentially unchanged from the pre-fix numbers documented in `docs/backlog.md` GAP-009 § C. This means those tokens were already living in main-convo prose, not in subagent dispatches. Sidechain drop did important work elsewhere (removing 45% of conversational lines from LLM-to-LLM dispatch noise), just not on these specific tokens. Validates the "carry-over GAP-007 paste-denoise" hypothesis.
 
 ---
