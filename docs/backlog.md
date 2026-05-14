@@ -16,11 +16,11 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Roadmap
 
-Ordered feature list. First feature (F1) has spec + plan landed; rest are placeholders until promoted. When a feature begins, write its spec at `docs/superpowers/specs/{date}-{slug}.md` and plan at `docs/superpowers/plans/{date}-{slug}.md`; when it ships, delete those temporal files (per CLAUDE.md § Doc Sync).
+Ordered feature list. F1 shipped; rest are placeholders until promoted. When a feature begins, write its spec at `docs/superpowers/specs/{date}-{slug}.md` and plan at `docs/superpowers/plans/{date}-{slug}.md`; when it ships, delete those temporal files (per CLAUDE.md § Doc Sync).
 
 | ID | Slug                  | Title                                              | Rationale                                                                |
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. **Spec + plan landed.**      |
+| F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. Shipped.                     |
 | F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Core v1 promise per `docs/overview.md`.                                  |
 | F3 | `cli-filters`         | `--project <name>`, `--since <window>`, `--top-n`  | Scope long histories / many-project users.                               |
 | F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
