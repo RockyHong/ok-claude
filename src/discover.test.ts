@@ -63,4 +63,17 @@ describe("discoverLogs", () => {
     expect(logsRoot()).toContain(".claude");
     expect(logsRoot()).toContain("projects");
   });
+
+  it("skips files inside any subagents/ subdirectory (CC subagent dispatch logs)", async () => {
+    const root = join(homeDir, ".claude", "projects", "proj");
+    const sessionDir = join(root, "11111111-2222-3333-4444-555555555555");
+    const subagentsDir = join(sessionDir, "subagents");
+    mkdirSync(subagentsDir, { recursive: true });
+    writeFileSync(join(root, "session.jsonl"), "primary");
+    writeFileSync(join(subagentsDir, "agent-aaa.jsonl"), "dispatch");
+    writeFileSync(join(subagentsDir, "agent-bbb.jsonl"), "dispatch2");
+
+    const entries = await discoverLogs();
+    expect(entries.map((e) => e.path)).toEqual([join(root, "session.jsonl")]);
+  });
 });

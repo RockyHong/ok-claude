@@ -1,12 +1,17 @@
 import { readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 
 export type LogFile = { path: string; size: number };
 
 export function logsRoot(): string {
   return join(homedir(), ".claude", "projects");
 }
+
+// Claude Code nests subagent dispatch transcripts under
+//   <project>/<session-uuid>/subagents/agent-*.jsonl
+// Those are LLM-to-LLM prompts, not human typing — exclude from wordcloud.
+const SUBAGENT_SEG = `${sep}subagents${sep}`;
 
 export async function discoverLogs(): Promise<LogFile[]> {
   const root = logsRoot();
@@ -19,7 +24,9 @@ export async function discoverLogs(): Promise<LogFile[]> {
     for (const e of entries) {
       if (!e.isFile()) continue;
       if (!e.name.endsWith(".jsonl")) continue;
-      paths.push(join(e.parentPath, e.name));
+      const full = join(e.parentPath, e.name);
+      if (full.includes(SUBAGENT_SEG)) continue;
+      paths.push(full);
     }
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
