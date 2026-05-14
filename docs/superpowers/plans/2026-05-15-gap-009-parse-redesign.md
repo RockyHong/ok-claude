@@ -97,6 +97,20 @@ Post-fix corpus: 3,175 user msgs / 7,924 claude msgs; 7,337 unique user tokens /
 
 No mechanism tasks skipped. Proceed to Task 10.
 
+### Task 10 post-landing note
+
+Task 10 commits: `1d1546d` (initial) + `37ba76b` (BUILD_WARNING colon-fix).
+
+Beyond-spec extensions kept (all corpus-calibrated, justified by backlog § C targets):
+- `MONO_JIT_FRAME` regex — Unity Mono JIT native frames (`0x... (Mono JIT Code)`).
+- `BUILD_WARNING` regex — Gradle/Java compiler output (colon-anchored to reject prose false positives).
+- `IDENT_DOT` extended to match `PascalCase.PascalCase` (Unity/.NET namespaces).
+
+Vocab-contracts delta:
+- 3 new PASS: `jit` (313→2), `bool` (129→2), `date` (rank 15→1352).
+- 1 indirect rank regression: `then` rank 51→44 (count unchanged at 180). Caused by removing higher-ranked noise above it. Acceptable side-effect — contract was always marginal (1 slot from failure pre-Task-10). Will revisit in Task 13 doc-sync — may need to recalibrate the RARELY claim or drop `then` from contracts.
+- Persistent NEVER fails: `mono` 406→94 (rank 11→115; outside top-100 but still count >5), `null` 266 unchanged, `program` 158 unchanged, `gradle` 145→138, `android` 131→121, `object` 125→91, `src` 115 unchanged. These tokens survive in main-convo prose at counts that exceed the ≤5 threshold — Task 13 will reassess whether the contract values themselves need updating against reality.
+
 **Observation:** The post-fix counts for `mono` / `jit` / `null` / `date` / `unity` are essentially unchanged from the pre-fix numbers documented in `docs/backlog.md` GAP-009 § C. This means those tokens were already living in main-convo prose, not in subagent dispatches. Sidechain drop did important work elsewhere (removing 45% of conversational lines from LLM-to-LLM dispatch noise), just not on these specific tokens. Validates the "carry-over GAP-007 paste-denoise" hypothesis.
 
 ---
