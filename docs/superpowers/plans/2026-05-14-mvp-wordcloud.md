@@ -104,20 +104,20 @@
 
 ### Task 9: Integration smoke
 
-- [ ] `pnpm build`.
-- [ ] `node dist/cli.js` on the dev machine.
-- [ ] Assert: HTML written, browser opens, wordcloud visible.
+- [x] `pnpm build` — clean build, `dist/cli.js` 7.47 KB, vendor dir copied.
+- [x] Pipeline ran against real `~/.claude/projects/` via `tsx` runner — wrote 41 KB HTML with top tokens like `user`, `test`, `docs`, `code`, `claude`, `commit`, `git` (>10 distinct tokens). Data + vendor inlined, no CDN refs.
+- [ ] **Pending user**: `node dist/cli.js` and visual confirmation wordcloud renders legibly in the browser.
 - [ ] Manual verification — record outcome in PR/commit message.
 - [ ] No commit unless smoke surfaces a bug to fix.
 
 ### Task 10: Doc sync
 
-- [ ] Update `docs/overview.md` § Module Index with the eight modules from Task 1.
-- [ ] Update `docs/overview.md` § Data Flow with the pipeline arrow chain.
-- [ ] Update `docs/techstack.md` § Architecture Rules — note the vendoring rule (no runtime CDN; offline-safe emitted HTML).
-- [ ] Update `docs/techstack.md` § Coding Patterns — note ESM-only, strict TS, `node:` prefix imports.
-- [ ] Confirm no stale lines in CLAUDE.md "Commands" placeholder block — replace TBD shell with real commands.
-- [ ] Commit: `docs: sync overview + techstack with mvp-wordcloud landing`.
+- [x] Update `docs/overview.md` § Module Index with the eight modules from Task 1.
+- [x] Update `docs/overview.md` § Data Flow with the pipeline arrow chain.
+- [x] Update `docs/techstack.md` § Architecture Rules — note the vendoring rule (no runtime CDN; offline-safe emitted HTML).
+- [x] Update `docs/techstack.md` § Coding Patterns — note ESM-only, strict TS, `node:` prefix imports.
+- [x] Confirm no stale lines in CLAUDE.md "Commands" placeholder block — replace TBD shell with real commands.
+- [x] Commit: `docs: sync overview + techstack with mvp-wordcloud landing`.
 
 ### Task 11: Close-out
 

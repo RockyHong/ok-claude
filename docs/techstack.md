@@ -54,11 +54,22 @@ Output: `./whatdidclaudesay-output.html` (self-contained, auto-opened).
 
 ## Architecture Rules
 
-> Grows via doc-sync as patterns crystallize. Module boundaries, data flow direction, dependency philosophy, layering rules.
+- **Pipeline is one-way.** `discover → parse → tokenize → aggregate → render → write`. No back-edges. New transforms slot between two existing stages; never reach upstream.
+- **Pure-logic modules stay pure.** `parse`, `tokenize`, `aggregate`, `render` take string / array input → string / array / Map output. No I/O, no `process.*`, no `fs`. Side effects live in `discover`, `pipeline`, `cli`.
+- **Vendor library = inlined, never fetched.** Browser libraries in `src/vendor/` are committed verbatim with source URL + version + license header. `render.ts` reads them as strings (`fs.readFileSync(new URL(..., import.meta.url), "utf8")`) and string-interpolates into the emitted HTML. The emitted HTML must work fully offline — no `<script src=...>`, no `<link href=http...>`, no `fetch`. tsup `onSuccess` mirrors `src/vendor/` to `dist/vendor/` so the runtime path resolves in both source and bundle.
+- **`</script>` escape on user-derived strings.** `render.ts` `safeJson` rewrites `</script` → `<\/script` before injecting into `<script>` blocks; without this, a hostile token could break out of the JSON island.
+- **Tolerant parse, strict types.** External JSONL has no schema guarantee — `parse.ts` swallows bad lines silently. Internal types (`LogEvent`, `RenderMeta`) are strict; pipeline assumes them post-parse.
+- **One output file.** CLI emits exactly `./whatdidclaudesay-output.html` in the invocation dir. No temp files, no caches, no follow-up writes.
 
 ## Coding Patterns
 
-> Grows via doc-sync as patterns crystallize. Import style, error handling convention, naming, class-vs-function bias, type usage.
+- **ESM-only.** `"type": "module"` in `package.json`. `import`/`export`, never `require`. Relative imports include the `.js` suffix (NodeNext resolution).
+- **`node:` prefix for built-ins.** `import { readFile } from "node:fs/promises"`, `node:os`, `node:path`. Makes intent explicit and avoids future shadowing.
+- **TypeScript `strict` + `noUncheckedIndexedAccess`.** Indexed access yields `T | undefined`; nullish coalescing or guards required.
+- **Function-first, classes when state really lives together.** v1 has no classes — every module exports plain functions and types.
+- **Tests are flat vitest specs (`*.test.ts`) co-located in `src/`.** No `__tests__` directory, no test helpers ladder. `pnpm test` runs the lot via `vitest run`.
+- **`safeJson` over hand-rolled escape.** Any string crossing the JS↔HTML island goes through `JSON.stringify` + `</script>` rewrite. Never template literals with raw user data into `<script>` blocks.
+- **Sync read at module top-level for build-time assets.** `render.ts` reads the vendored library once with `readFileSync` at import — captures it in a module-scoped const. Acceptable because the file is bundled-adjacent, not user-input-sized.
 
 ## Rejected Alternatives
 

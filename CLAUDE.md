@@ -137,12 +137,18 @@ Node 20+ + TypeScript CLI, npx-distributed (npm registry). Output: self-containe
 ## Commands
 
 ```bash
-# To be filled when source lands. Planned shape:
-# pnpm install
-# pnpm dev          # tsx watch src/cli.ts
-# pnpm build        # bundle dist/cli.js with shebang
-# pnpm test         # vitest
-# npm publish       # publishes to npm registry
+pnpm install        # install deps
+pnpm dev            # tsx run src/cli.ts (one-shot; rerun manually)
+pnpm build          # tsup bundle → dist/cli.js (shebang) + dist/vendor/ mirror
+pnpm test           # vitest run (one-shot)
+pnpm test:watch     # vitest in watch mode
+pnpm exec tsc --noEmit   # type-check only
+
+# Smoke without auto-opening browser:
+pnpm exec tsx -e "import('./src/pipeline.ts').then(m => m.run()).then(r => console.log(JSON.stringify(r)))"
+
+# Publish (when ready):
+npm publish         # publishes to npm registry
 ```
 
 ## Git Notes
