@@ -14,20 +14,22 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ---
 
+## Roadmap
+
+Ordered feature list. First feature (F1) has spec + plan landed; rest are placeholders until promoted. When a feature begins, write its spec at `docs/superpowers/specs/{date}-{slug}.md` and plan at `docs/superpowers/plans/{date}-{slug}.md`; when it ships, delete those temporal files (per CLAUDE.md § Doc Sync).
+
+| ID | Slug                  | Title                                              | Rationale                                                                |
+| -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. **Spec + plan landed.**      |
+| F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Core v1 promise per `docs/overview.md`.                                  |
+| F3 | `cli-filters`         | `--project <name>`, `--since <window>`, `--top-n`  | Scope long histories / many-project users.                               |
+| F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
+| F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop per `docs/overview.md`.                   |
+| F6 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per `docs/overview.md`.                                               |
+| F7 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Shipping. Closes the distribution loop.                                  |
+
+---
+
 ## Open
 
-### GAP-001: Plan v1 roadmap
-
-**Affected area:** whole product
-
-**Why it matters:** bootstrap delivered overview + techstack but no feature breakdown / order / first-step. Without this, `/todo` will report empty and the pipeline has no fuel.
-
-**What's missing:** ordered feature list with rationale, first-feature spec, and first-feature plan.
-
-**Deliverables** (session triages phases via harness phase-gate; ground work in `docs/overview.md` + `docs/techstack.md`):
-
-- This backlog file populated with feature breakdown (one item per feature, ordered, w/ rationale).
-- First-feature spec at `docs/specs/{first-feature-slug}.md` (or `docs/superpowers/specs/` if the project doesn't scaffold persistent specs — the `/harness-bootstrap` Q&A decides).
-- First-feature plan at `docs/superpowers/plans/{date}-{first-feature-slug}.md`.
-
-After deliverables exist, delete this `GAP-001` item — `/todo` will pick up the actual work from the populated backlog and first-feature spec/plan.
+_(none — GAP-001 resolved; feature breakdown above replaces it.)_
