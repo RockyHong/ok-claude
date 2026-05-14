@@ -13,11 +13,14 @@ type RawMessage = {
   usage?: { input_tokens?: unknown; output_tokens?: unknown };
 };
 type RawLine = {
+  type?: string;
   message?: RawMessage;
   timestamp?: string;
   isMeta?: boolean;
   isCompactSummary?: boolean;
 };
+
+const PROSE_TYPES = new Set(["user", "assistant"]);
 
 function extractText(content: string | RawContentBlock[] | undefined): string {
   if (typeof content === "string") return content;
@@ -62,6 +65,8 @@ export function parseLine(line: string): LogEvent | null {
   } catch {
     return null;
   }
+
+  if (raw.type !== undefined && !PROSE_TYPES.has(raw.type)) return null;
 
   if (raw.isMeta === true) return null;
   if (raw.isCompactSummary === true) return null;

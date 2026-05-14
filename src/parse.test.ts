@@ -273,4 +273,51 @@ describe("parseJsonl", () => {
     expect(events[1]).not.toHaveProperty("tokensIn");
     expect(events[1]).not.toHaveProperty("tokensOut");
   });
+
+  it("drops non-prose line types via type-whitelist (system, attachment, progress, last-prompt, file-history-snapshot, permission-mode, ai-title, queue-operation, custom-title, agent-name)", () => {
+    const dropTypes = [
+      "system",
+      "attachment",
+      "progress",
+      "last-prompt",
+      "file-history-snapshot",
+      "permission-mode",
+      "ai-title",
+      "queue-operation",
+      "custom-title",
+      "agent-name",
+    ];
+    const lines = dropTypes.map((t) =>
+      JSON.stringify({
+        type: t,
+        message: { role: "user", content: "should be dropped" },
+      }),
+    );
+    lines.push(
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: "kept" },
+      }),
+    );
+
+    const events = parseJsonl(lines.join("\n"));
+
+    expect(events.map((e) => e.text)).toEqual(["kept"]);
+  });
+
+  it('drops legacy compact-summary line (type: "summary") for forward-compat', () => {
+    const content = [
+      JSON.stringify({
+        type: "summary",
+        summary: "old-style compact",
+        leafUuid: "x",
+      }),
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: "kept" },
+      }),
+    ].join("\n");
+
+    expect(parseJsonl(content).map((e) => e.text)).toEqual(["kept"]);
+  });
 });
