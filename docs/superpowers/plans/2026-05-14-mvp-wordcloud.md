@@ -85,8 +85,8 @@
 
 ### Task 8: `pipeline.ts` + `cli.ts` — orchestrate
 
-- [ ] `pipeline.ts` exports `async function run(): Promise<{ outPath: string | null; reason?: string }>`.
-- [ ] Flow:
+- [x] `pipeline.ts` exports `async function run(): Promise<{ outPath: string | null; reason?: string }>`.
+- [x] Flow:
   1. `discoverLogs()` → array. Empty → return `{ outPath: null, reason: "No Claude Code logs found at ~/.claude/projects/" }`.
   2. For each file, `fs.readFile`, `parseJsonl`, accumulate events.
   3. Concat all event `text`s. Tokenize. Aggregate. `topN(freq, 100)`.
@@ -94,13 +94,13 @@
   5. `renderHtml(topN, meta)` → string.
   6. Write to `./whatdidclaudesay-output.html`.
   7. Return `{ outPath }`.
-- [ ] `cli.ts`:
+- [x] `cli.ts`:
   - Top-line shebang (added by tsup banner).
   - Imports `pipeline.run`, awaits result.
   - If `outPath`: `await open(outPath)`. Exit 0.
   - If `reason`: `process.stderr.write(reason + "\n")`. Exit 0.
-- [ ] No unit test for `cli.ts` (thin glue). `pipeline.ts` unit test with mocked deps optional — defer if `discover` + `parse` + `tokenize` + `aggregate` + `render` are all green.
-- [ ] Commit: `feat(pipeline): wire discover → parse → tokenize → aggregate → render → open`.
+- [x] No unit test for `cli.ts` (thin glue). `pipeline.ts` unit test deferred — discover + parse + tokenize + aggregate + render all green, covering the logic surface.
+- [x] Commit: `feat(pipeline): wire discover → parse → tokenize → aggregate → render → open`.
 
 ### Task 9: Integration smoke
 
