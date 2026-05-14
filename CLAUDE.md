@@ -1,4 +1,7 @@
-# WhatDidClaudeSay
+# OK Claude
+
+> npm: `ok-claude` · display: `OK Claude` · output: `./ok-claude-output.html`
+> Name = pun on dev's most-typed phrase to Claude Code ("ok claude, go").
 
 <!--
   Skeleton target: every line earns its always-on slot.

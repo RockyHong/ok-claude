@@ -16,7 +16,7 @@ describe("renderHtml", () => {
     expect(html).toContain("wordcloud2.js");
     expect(html).toContain('"foo"');
     expect(html).toContain('"bar"');
-    expect(html).toContain("What Did Claude Say");
+    expect(html).toContain("OK Claude");
   });
 
   it("includes session count and date range when provided", () => {

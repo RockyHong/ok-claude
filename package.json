@@ -1,10 +1,10 @@
 {
-  "name": "whatdidclaudesay",
+  "name": "ok-claude",
   "version": "0.1.0",
-  "description": "Mechanical wordcloud of your local Claude Code conversations. npx-distributed, self-contained HTML output.",
+  "description": "Wordcloud of your Claude Code sessions — see how often you really said 'ok claude'. npx-distributed, self-contained HTML output.",
   "type": "module",
   "bin": {
-    "whatdidclaudesay": "dist/cli.js"
+    "ok-claude": "dist/cli.js"
   },
   "files": [
     "dist"

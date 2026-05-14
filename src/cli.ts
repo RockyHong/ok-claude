@@ -12,6 +12,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`whatdidclaudesay: ${(err as Error).message}\n`);
+  process.stderr.write(`ok-claude: ${(err as Error).message}\n`);
   process.exit(1);
 });

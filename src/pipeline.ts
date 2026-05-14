@@ -6,7 +6,7 @@ import { tokenize } from "./tokenize.js";
 import { aggregate, topN } from "./aggregate.js";
 import { renderHtml } from "./render.js";
 
-const OUTPUT_FILE = "whatdidclaudesay-output.html";
+const OUTPUT_FILE = "ok-claude-output.html";
 const TOP_N = 100;
 
 export type RunResult =

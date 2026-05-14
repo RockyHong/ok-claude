@@ -5,7 +5,7 @@
  * Copyright 2011 - 2019 Tim Guan-tin Chien and contributors.
  * Released under the MIT license
  *
- * Vendored for whatdidclaudesay.
+ * Vendored for ok-claude.
  *   Source:  https://registry.npmjs.org/wordcloud (npm package "wordcloud")
  *   Version: 1.2.3
  *   File:    package/src/wordcloud2.js (unminified — npm package ships no min build)

@@ -1,7 +1,7 @@
 # Vendor
 
 Third-party browser libraries copied in-tree, inlined verbatim into the emitted
-`whatdidclaudesay-output.html` at build time. No CDN, no network at view time —
+`ok-claude-output.html` at build time. No CDN, no network at view time —
 the emitted HTML is offline-safe and tamper-stable.
 
 ## Policy
