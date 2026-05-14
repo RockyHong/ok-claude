@@ -1,6 +1,8 @@
 {
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "super-bootstrap@super-bootstrap": true,
+    "caveman@caveman": true
   }
 }
