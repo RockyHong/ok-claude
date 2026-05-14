@@ -65,3 +65,21 @@ describe("renderHtml", () => {
     expect(html).not.toMatch(/<\/script><script>alert/);
   });
 });
+
+describe("renderHtml — tabs", () => {
+  it("renders two tab buttons labelled You and Claude with You active by default", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<button[^>]*data-tab="user"[^>]*>\s*You\s*<\/button>/);
+    expect(html).toMatch(/<button[^>]*data-tab="claude"[^>]*>\s*Claude\s*<\/button>/);
+    expect(html).toMatch(/<button[^>]*data-tab="user"[^>]*class="[^"]*active/);
+    expect(html).not.toMatch(/<button[^>]*data-tab="claude"[^>]*class="[^"]*active/);
+  });
+
+  it("includes a click handler that swaps the canvas to the selected speaker's list", () => {
+    const html = renderHtml(input());
+    expect(html).toContain('addEventListener(\'click\'');
+    expect(html).toMatch(/data-tab/);
+    expect(html).toContain("topClaude");
+    expect(html).toContain("topUser");
+  });
+});
