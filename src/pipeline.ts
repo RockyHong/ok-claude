@@ -46,10 +46,10 @@ export async function run(): Promise<RunResult> {
   }
 
   const events: LogEvent[] = [];
-  for (const file of files) {
+  for (const entry of files) {
     let content: string;
     try {
-      content = await readFile(file, "utf8");
+      content = await readFile(entry.path, "utf8");
     } catch {
       continue;
     }
