@@ -8,7 +8,7 @@
 
 ## Active rules
 
-None yet. Greenfield repo — no Phase 1 signals (frontend component dir, MV3 manifest, migrations, tests dir) fired during bootstrap. Add rules below as path-scoped patterns emerge.
+None yet. No Phase 1 signals (frontend component dir, MV3 manifest, migrations, tests dir) fired during bootstrap or sync passes. Add rules below as path-scoped patterns emerge.
 
 ## Adding a new rule
 

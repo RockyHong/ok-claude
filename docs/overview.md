@@ -23,7 +23,7 @@ Claude Code community. Anyone with a populated `~/.claude/projects/` directory w
 
 ## Current State
 
-greenfield
+active development — MVP (F1 `mvp-wordcloud`) shipped end-to-end; F2–F7 roadmap queued in `docs/backlog.md`.
 
 ## Module Index
 
