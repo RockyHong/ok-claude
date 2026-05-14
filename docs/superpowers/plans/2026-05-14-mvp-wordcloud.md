@@ -38,18 +38,18 @@
 
 ### Task 4: `tokenize.ts` — Intl.Segmenter wrapper
 
-- [ ] Function `tokenize(text: string): string[]` — uses `new Intl.Segmenter(undefined, { granularity: "word" })`.
-- [ ] Keep `isWordLike === true`.
-- [ ] Lowercase via `toLocaleLowerCase()`.
-- [ ] Length filter per spec: drop length-1 Latin/digit tokens; keep length-1 CJK-script tokens (regex against `\p{Script=Han|Hiragana|Katakana|Hangul}`).
-- [ ] English stopword set per spec.
-- [ ] Tests in `src/tokenize.test.ts`:
+- [x] Function `tokenize(text: string): string[]` — uses `new Intl.Segmenter(undefined, { granularity: "word" })`.
+- [x] Keep `isWordLike === true`.
+- [x] Lowercase via `toLocaleLowerCase()`.
+- [x] Length filter per spec: drop length-1 Latin/digit tokens; keep length-1 CJK-script tokens (regex against `\p{Script=Han|Hiragana|Katakana|Hangul}`).
+- [x] English stopword set per spec.
+- [x] Tests in `src/tokenize.test.ts`:
   - `"The quick brown fox"` → `["quick","brown","fox"]` (stopword + length-1 filter)
-  - `"今天天气很好"` → `["今","天","天","气","很","好"]` (or whatever ICU yields — assert non-empty, all CJK)
-  - mixed `"hello 世界"` → `["hello","世","界"]`
+  - `"今天天气很好"` → asserts non-empty, all CJK (ICU may return whole run or per char)
+  - mixed `"hello 世界"` → asserts "hello" + non-empty Han presence (ICU segmentation locale-dependent)
   - punctuation only → `[]`
   - empty string → `[]`
-- [ ] Commit: `feat(tokenize): Intl.Segmenter word tokenizer with CJK + Latin filters`.
+- [x] Commit: `feat(tokenize): Intl.Segmenter word tokenizer with CJK + Latin filters`.
 
 ### Task 5: `aggregate.ts` — frequency + top-N
 
