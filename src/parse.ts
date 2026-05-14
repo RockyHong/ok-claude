@@ -26,28 +26,33 @@ function extractText(content: string | RawContentBlock[] | undefined): string {
   return out;
 }
 
+export function parseLine(line: string): LogEvent | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+
+  let raw: RawLine;
+  try {
+    raw = JSON.parse(trimmed) as RawLine;
+  } catch {
+    return null;
+  }
+
+  const role = raw.message?.role;
+  if (role !== "user" && role !== "assistant") return null;
+
+  const text = extractText(raw.message?.content);
+  if (!text) return null;
+
+  const event: LogEvent = { role, text };
+  if (typeof raw.timestamp === "string") event.timestamp = raw.timestamp;
+  return event;
+}
+
 export function parseJsonl(content: string): LogEvent[] {
   const events: LogEvent[] = [];
   for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    let raw: RawLine;
-    try {
-      raw = JSON.parse(trimmed) as RawLine;
-    } catch {
-      continue;
-    }
-
-    const role = raw.message?.role;
-    if (role !== "user" && role !== "assistant") continue;
-
-    const text = extractText(raw.message?.content);
-    if (!text) continue;
-
-    const event: LogEvent = { role, text };
-    if (typeof raw.timestamp === "string") event.timestamp = raw.timestamp;
-    events.push(event);
+    const e = parseLine(line);
+    if (e) events.push(e);
   }
   return events;
 }
