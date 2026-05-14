@@ -22,7 +22,7 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
 | F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. Shipped.                     |
 | F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Shipped. Two-tab split (You / Claude) with per-tab empty-state.          |
-| F3 | `cli-filters`         | `--project <name>`, `--since <window>`, `--top-n`  | Scope long histories / many-project users.                               |
+| F3 | `stream-and-progress` | Stream tokenize + terminal progress bar (no flags) | All-time scope (overview Non-Negotiable #4) demands streaming to dodge V8 string ceiling; progress bar covers parse latency on heavy histories. |
 | F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
 | F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop per `docs/overview.md`.                   |
 | F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |

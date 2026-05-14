@@ -15,7 +15,6 @@ None. CLI tool — no web framework. TypeScript for source.
 > Seed list — to be confirmed when scaffolded. Versions pinned at install.
 
 - **Runtime**
-  - `commander` — argv parsing
   - `open` — auto-launch default browser on result HTML
 - **Embedded in output HTML** (vendored inline in the emitted file — no CDN, self-contained / offline-safe)
   - `wordcloud2.js` — canvas wordcloud renderer
@@ -44,11 +43,11 @@ npm publish         # publishes to npm registry
 User-facing run:
 
 ```
-npx ok-claude                       # auto-scan all projects
-npx ok-claude --project <name>      # scope one project
-npx ok-claude --since 7d            # time window
+npx ok-claude                       # scan all projects, all time
 npx github:user/ok-claude           # pre-publish fallback
 ```
+
+No flags — see `docs/overview.md` § Non-Negotiables #1.
 
 Output: `./ok-claude-output.html` (self-contained, auto-opened).
 

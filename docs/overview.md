@@ -17,6 +17,20 @@ Fun hobby CLI tool. Scans local Claude Code session logs at `~/.claude/projects/
 
 v1 surfaces most-used words split by speaker (user vs Claude). v2 extends to most-said sentences. Tokenization must handle both Latin (whitespace) and CJK (character segmentation) input cleanly. Layout (combined vs split tabs/images) decided post-bootstrap.
 
+## Non-Negotiables
+
+First principles. Every roadmap item checks against these before phase triage. Drift = re-read this section.
+
+1. **Zero flags.** `npx ok-claude` only. No `--project`, no `--since`, no `--top-n`. Knobs kill the share impulse.
+2. **Zero install.** `npx` distribution on Node. Claude Code CLI users already have Node — 100% overlap. No Python, no clone-and-run, no `.bat` shims.
+3. **One shot, one file.** Run → progress in terminal → single self-contained HTML auto-opens → in-page PNG export → share. No config, no second run.
+4. **All-time scope.** Whole `~/.claude/projects/` history every run. "Look how much of my year" beats "look at last week" for share-fuel. Stream-process to dodge memory ceilings rather than window the data.
+5. **Mechanical, not AI.** Frequency counts only. No LLM calls inside this tool. The joke is *what you actually said*, not *what an LLM thinks you said*.
+6. **Two tabs max** (You / Claude). v2 adds sentences inside the same two-tab frame. No third axis, no project pivot, no time pivot.
+7. **Meme energy is the metric.** Every feature passes "does this make the screenshot funnier or easier to share?" Friction-adding features fail by default — backlog them as `GAP-###` until a real user begs.
+
+When a roadmap item conflicts with one of these, the roadmap item loses or gets reshaped. F3 was originally `--project / --since / --top-n` filters; collided with #1 and #7; reshaped to "stream + progress bar, no flags."
+
 ## User
 
 Claude Code community. Anyone with a populated `~/.claude/projects/` directory who wants a shareable visual of their AI conversation patterns. Distribution via npm registry; users run `npx ok-claude` with zero install. Fallback `npx github:user/ok-claude` works pre-publish.
