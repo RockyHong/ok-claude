@@ -274,6 +274,31 @@ describe("parseJsonl", () => {
     expect(events[1]).not.toHaveProperty("tokensOut");
   });
 
+  it("drops lines flagged isSidechain: true (inline subagent dispatch — GAP-009)", () => {
+    const content = [
+      JSON.stringify({
+        type: "user",
+        isSidechain: true,
+        message: { role: "user", content: "subagent dispatch prose" },
+      }),
+      JSON.stringify({
+        type: "assistant",
+        isSidechain: true,
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "subagent reply prose" }],
+        },
+      }),
+      JSON.stringify({
+        type: "user",
+        isSidechain: false,
+        message: { role: "user", content: "human typed" },
+      }),
+    ].join("\n");
+
+    expect(parseJsonl(content).map((e) => e.text)).toEqual(["human typed"]);
+  });
+
   it("drops non-prose line types via PROSE_TYPES whitelist (includes legacy summary)", () => {
     const dropTypes = [
       "system",

@@ -17,6 +17,7 @@ type RawLine = {
   message?: RawMessage;
   timestamp?: string;
   isMeta?: boolean;
+  isSidechain?: boolean;
   isCompactSummary?: boolean;
 };
 
@@ -69,6 +70,7 @@ export function parseLine(line: string): LogEvent | null {
   if (raw.type !== undefined && !PROSE_TYPES.has(raw.type)) return null;
 
   if (raw.isMeta === true) return null;
+  if (raw.isSidechain === true) return null;
   if (raw.isCompactSummary === true) return null;
 
   const role = raw.message?.role;
