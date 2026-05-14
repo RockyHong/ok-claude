@@ -32,6 +32,59 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
+### GAP-008 — research CC session-log schema (truth, not guessing)
+
+- **Area:** `src/parse.ts`, `src/discover.ts`
+- **Why it matters:** every leak fix this session was discovered by spelunking real `~/.claude/projects/` files and inferring schema fields (`isMeta`, `isCompactSummary`, `isSidechain`, `isVisibleInTranscriptOnly`, `parentUuid`, nested `<session>/subagents/` tree). Found two latent bugs (BUG-002 subagent path, BUG-003 compact-summary) only because we got lucky reading the right file. Other leak markers (e.g. tool-call wrapping flags, hook injections, MCP-server outputs) probably exist and we'd find them the same hard way.
+- **Proposed fix:** find authoritative reference for the CC session-log JSONL schema. Sources to check: (a) Claude Code public docs, (b) `anthropics/claude-code` GitHub if open-source, (c) community wikis / reverse-engineering writeups, (d) `claude-config-manager` skill catalog, (e) `~/.claude/CHANGELOG`-style metadata. Output: a short reference in `docs/cc-log-schema.md` listing every line-level flag we should consider filtering and what each means.
+- **Also search:** does the broader community (e.g. `WhatDidClaudeSay` repo in user's logs, `Claudia`, similar tools) already solve this prose-extraction problem more cleanly? Don't reinvent if a battle-tested schema-walker exists.
+- **Surfaced during:** GAP-002 → BUG-002 → BUG-003 chain in this session. User intuition: "stop guessing, solve by real truth of structure."
+
+### GAP-007 — non-fenced error/log paste denoise (real-data TDD fixtures)
+
+- **Area:** `src/denoise.ts` (or new pre-tokenize step)
+- **Why it matters:** after BUG-002 (subagent path) + BUG-003 (compact-summary) + GAP-002 (fenced-code strip), residual user top-100 still contains tech tokens user explicitly says they never type. Real-data probe shows leaks:
+
+  | User says they NEVER type | top-100 count / rank |
+  | --- | --- |
+  | `mono` | 406 / **#11** |
+  | `jit` | 313 / **#20** |
+  | `null` | 266 / #25 |
+  | `program` | 158 / #60 |
+  | `gradle` | 145 / #65 |
+  | `android` | 131 / #81 |
+  | `bool` | 129 / #82 |
+  | `object` | 125 / #87 |
+  | `src` | 115 / #95 |
+
+  | User says they RARELY type | count / rank |
+  | --- | --- |
+  | `date` | 355 / #15 |
+  | `unity` | 348 / #17 |
+  | `then` | 178 / #51 |
+  | `library` | 114 / #96 |
+
+  Likely sources: pasted TS/lint type errors (`null`, `bool`, `object`, `NullReferenceException` style), build/runtime log paste (`mono`, `jit`, `gradle`, `android` from Unity/Android stack traces), JS `.then()` chain mentions, `Date.now()` references. All survive fenced-code strip because users paste error text inline without ``` ``` fences.
+- **Proposed fix (design call needed):** detect non-fenced structured/repetitive blocks:
+  1. Stack-trace pattern (lines starting `at ...`, `  File "...", line ###`, indented stack frames).
+  2. Type-error pattern (`Type '...' is not assignable to type '...'`, `NullReferenceException`, `error TSxxxx:`).
+  3. Heuristic: any 3+ consecutive lines where ≥50% of tokens are identifier-like (`[a-z]+\.[a-z]+`, `[A-Z][a-zA-Z]+Error`) → treat as paste blob, strip.
+- **TDD fixtures:** every token in the table above is a known-bad. Test = denoise pipeline should reduce their counts to user-reported reality (`mono` 0–5, not 406). Pre-write per-token assertions before iterating regex.
+- **Also surfaced:** `soc` (user says they say it a lot, count=83, rank #168) — under-ranked, related GAP-### would be rarity/per-session weighting. Keep separate from this paste-denoise scope; this scope is about cutting noise floor, not boosting signal.
+- **Surfaced during:** post-BUG-003 wet-run audit (this session).
+
+### GAP-006 — rarity / per-session weight for meme-energy tokens
+
+- **Area:** `src/aggregate.ts` or new ranking step
+- **Why it matters:** even after schema + paste cleanup, conversational meme tokens (`wth` count=30 rank #478, `soc` count=83 rank #168) sit far below the top-100 render cut. Across 7331 unique user tokens, working vocab (`task`, `commit`, `claude`, `skill`) dominates by absolute count. But the wordcloud's brand promise = "the meme self-roast you," not "the boring dev grammar." Raw-frequency ranking loses this fight.
+- **Surfaced during:** this session's audit after BUG-002 + BUG-003 landed and revealed real-but-rare `wth`/`soc` counts that still won't render.
+- **Proposed fix (design call needed):** options —
+  1. **Per-session normalize** — count token frequency per session-file, average across sessions. Distinctive vocab survives; project-specific tech vocab demoted by spread.
+  2. **TF-IDF-ish boost** — multiply count by `log(total_sessions / sessions_containing_token)`. Memes that appear in few sessions but heavily get a boost; everywhere-tokens get cut.
+  3. **Per-message dedup or cap** — overlaps GAP-003. Caps within-message repetition.
+- **Open:** picking #1 or #2 changes the count semantics that show in the cloud — the "size = count" mental model breaks. May need a tooltip / secondary "distinctive vocab" view.
+- **Depends on:** GAP-007 (paste denoise) — should land first so we're not boosting `mono`/`jit` noise into top-100.
+
 ### GAP-005 — short-Latin filter drops legit interjections (`y`, `n`, `k`, `lol`-ish)
 
 - **Area:** `src/tokenize.ts` line ~24 (`if (!isCjk && [...lower].length < 2) continue;`)
