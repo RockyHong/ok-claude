@@ -25,8 +25,8 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 | F3 | `cli-filters`         | `--project <name>`, `--since <window>`, `--top-n`  | Scope long histories / many-project users.                               |
 | F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
 | F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop per `docs/overview.md`.                   |
-| F6 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per `docs/overview.md`.                                               |
-| F7 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Shipping. Closes the distribution loop.                                  |
+| F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
+| F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per `docs/overview.md` — iterate post-publish.                        |
 
 ---
 
