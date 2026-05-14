@@ -92,9 +92,26 @@ ${VENDOR_JS}
     canvas.style.height = wrap.clientHeight + 'px';
   }
 
-  function draw(list) {
+  function showEmpty(tab) {
+    var msg = tab === 'user' ? 'No words from You yet.' : 'No words from Claude yet.';
+    wrap.innerHTML = '<p style="padding:2rem;color:#8a939b">' + msg + '</p>';
+  }
+
+  function restoreCanvas() {
+    if (!document.getElementById('cloud')) {
+      wrap.innerHTML = '<canvas id="cloud"></canvas>';
+      canvas = document.getElementById('cloud');
+    }
+  }
+
+  function draw(tab) {
+    var list = lists[tab];
+    if (!list.length) {
+      showEmpty(tab);
+      return;
+    }
+    restoreCanvas();
     resize();
-    if (!list.length) return;
     var max = list[0][1];
     var weighted = list.map(function (pair) {
       var ratio = pair[1] / max;
@@ -122,14 +139,14 @@ ${VENDOR_JS}
       if (btn.getAttribute('data-tab') === tab) btn.classList.add('active');
       else btn.classList.remove('active');
     }
-    draw(lists[tab]);
+    draw(tab);
   }
 
   document.getElementById('tabs').addEventListener('click', function (ev) {
     var t = ev.target;
     if (!t || t.tagName !== 'BUTTON') return;
     var tab = t.getAttribute('data-tab');
-    if (!tab || tab === active) return;
+    if (!tab || tab === active || !lists[tab]) return;
     setActive(tab);
   });
 

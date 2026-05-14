@@ -83,3 +83,19 @@ describe("renderHtml — tabs", () => {
     expect(html).toContain("topUser");
   });
 });
+
+describe("renderHtml — empty-state per tab", () => {
+  it("includes a labeled empty-state branch for each speaker in the boot script", () => {
+    const html = renderHtml(input());
+    expect(html).toContain("No words from You yet.");
+    expect(html).toContain("No words from Claude yet.");
+  });
+
+  it("still renders both tab buttons even when one speaker's list is empty", () => {
+    const html = renderHtml(input({ topClaude: [] }));
+    expect(html).toMatch(/data-tab="user"/);
+    expect(html).toMatch(/data-tab="claude"/);
+    // empty array should still serialize into __DATA__
+    expect(html).toMatch(/"topClaude"\s*:\s*\[\s*\]/);
+  });
+});
