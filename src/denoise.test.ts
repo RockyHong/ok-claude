@@ -132,3 +132,94 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("'re");
   });
 });
+
+describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
+  it("strips a Java/Unity stack-frame run (3+ lines starting `at `)", () => {
+    const input = [
+      "context line about the bug",
+      "  at UnityEngine.GameObject.SendMessage (System.String methodName)",
+      "  at Mono.Cecil.AssemblyDefinition.MainModule",
+      "  at System.Reflection.MethodBase.Invoke",
+      "tail prose continues",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("context line");
+    expect(out).toContain("tail prose continues");
+    expect(out).not.toContain("UnityEngine");
+    expect(out).not.toContain("Mono");
+    expect(out).not.toContain("Cecil");
+  });
+
+  it("strips a Python traceback block", () => {
+    const input = [
+      "I ran the script",
+      'File "main.py", line 12, in <module>',
+      'File "lib/helper.py", line 44, in run',
+      'File "lib/helper.py", line 99, in process',
+      "now what",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("I ran the script");
+    expect(out).toContain("now what");
+    expect(out).not.toContain("main.py");
+    expect(out).not.toContain("helper.py");
+  });
+
+  it("strips a TS type-error block (3+ identifier-shape lines)", () => {
+    const input = [
+      "see this error",
+      "Type 'string | undefined' is not assignable to type 'string'",
+      "  Type 'undefined' is not assignable to type 'string'",
+      "src/foo.ts(12,5): error TS2322: Type 'number' is not assignable",
+      "what do you think",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("see this error");
+    expect(out).toContain("what do you think");
+    expect(out).not.toContain("TS2322");
+    expect(out).not.toContain("undefined");
+  });
+
+  it("does NOT strip a short 1-2 line technical mention", () => {
+    const input = "I saw error TS2322 once but it was fine";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("error TS2322 once");
+  });
+
+  it("does NOT strip plain prose that happens to start with `at`", () => {
+    const input = "at noon we talked\nat the meeting we agreed\nand left";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("at noon");
+    expect(out).toContain("at the meeting");
+  });
+
+  it("strips a Mono JIT native-frame run (0x... (Mono JIT Code) lines)", () => {
+    const input = [
+      "build crashed here",
+      "0x000001ac9ba966b5 (Mono JIT Code) (wrapper managed-to-native) UnityEditor.AssetDatabase:ImportPackage",
+      "0x000001ac9ba965db (Mono JIT Code) UnityEditor.AssetDatabase:ImportPackage (string,bool)",
+      "0x000001ac9ba96543 (Mono JIT Code) Unity.Services.LevelPlay.Editor.IntegrationManagerDownloader",
+      "let me know what happened",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("build crashed here");
+    expect(out).toContain("let me know what happened");
+    expect(out).not.toContain("Mono JIT Code");
+    expect(out).not.toContain("UnityEditor");
+  });
+
+  it("strips a Gradle task-output run (> Task :... lines)", () => {
+    const input = [
+      "gradle build output",
+      "> Task :unityLibrary:preBuild UP-TO-DATE",
+      "> Task :launcher:preBuild UP-TO-DATE",
+      "> Task :unityLibrary:generateReleaseResValues UP-TO-DATE",
+      "done",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("gradle build output");
+    expect(out).toContain("done");
+    expect(out).not.toContain("unityLibrary");
+    expect(out).not.toContain("UP-TO-DATE");
+  });
+});
