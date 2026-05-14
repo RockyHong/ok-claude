@@ -47,7 +47,7 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 ### GAP-004 — extract real token counts from JSONL for subhead
 
 - **Area:** `src/parse.ts`, `src/pipeline.ts`, `src/render.ts`
-- **Why it matters:** users care about token burn (proud-pain metric). Subhead currently shows session/message proxy — real `input_tokens` / `output_tokens` from Claude Code's assistant-line `usage` field is the share-worthy number ("burned 4.2M tokens this week").
+- **Why it matters:** users care about token burn (proud-pain metric). Subhead currently shows session/message proxy — real `input_tokens` / `output_tokens` from Claude Code's assistant-line `usage` field is the share-worthy number ("burned 4.2M tokens with Claude"). All-time per overview Non-Negotiable #4.
 - **Surfaced during:** F2 brainstorm. Subhead question. Deferred — `parse.ts` only extracts role/text/timestamp; adding usage parse = own scope.
 - **Proposed fix:** extend `LogEvent` with optional `tokensIn` / `tokensOut`. Tolerant parse (field may be missing on older logs). Sum across events for subhead. Render as `4.2M tokens` next to message count.
 - **Open:** which field path exactly (Claude Code log schema not pinned here). Inspect a real JSONL during impl.
@@ -64,5 +64,5 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 - **Area:** `src/aggregate.ts` (or upstream in pipeline)
 - **Why it matters:** current rule = every token instance counts. "ok claude ok claude" in one message = 2. Preserves intensity (matches brand). But amplifies any per-message repetition pathology. Once GAP-002 ships, re-evaluate whether per-message dedup or a per-message cap improves signal.
-- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until F3 (`--project`, `--since` filters) + F4 (top-N table) ship and we can compare on real data.
+- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until GAP-002 (denoise pasted code blocks) ships — paste blobs are the real noise driver that motivated the worry, so judge the counting rule on post-denoise data.
 - **Proposed fix (if revisited):** per-message cap at N occurrences, or per-message dedup. Pick after data, not speculation.
