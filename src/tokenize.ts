@@ -9,6 +9,8 @@ const STOPWORDS = new Set([
 const CJK_SCRIPT =
   /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]+$/u;
 
+const SHORT_LATIN_KEEP = new Set(["y", "n", "k"]);
+
 const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
 
 export function tokenize(text: string): string[] {
@@ -21,7 +23,8 @@ export function tokenize(text: string): string[] {
     const lower = seg.segment.toLocaleLowerCase();
     const isCjk = CJK_SCRIPT.test(lower);
 
-    if (!isCjk && [...lower].length < 2) continue;
+    if (!isCjk && [...lower].length < 2 && !SHORT_LATIN_KEEP.has(lower))
+      continue;
     if (/^\d+$/.test(lower)) continue;
     if (STOPWORDS.has(lower)) continue;
 

@@ -52,3 +52,18 @@ describe("tokenize", () => {
     expect(tokens).toEqual(["year", "line", "size", "word"]);
   });
 });
+
+describe("tokenize — short-Latin whitelist (GAP-009 D3)", () => {
+  it("keeps `y` as a standalone token", () => {
+    expect(tokenize("y or no")).toContain("y");
+  });
+  it("keeps `n` as a standalone token", () => {
+    expect(tokenize("oh n")).toContain("n");
+  });
+  it("keeps `k` as a standalone token", () => {
+    expect(tokenize("k cool")).toContain("k");
+  });
+  it("still drops other single-char Latin tokens", () => {
+    expect(tokenize("a b c d e f g h i j")).toEqual([]);
+  });
+});
