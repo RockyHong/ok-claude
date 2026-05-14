@@ -17,13 +17,35 @@ type RawLine = {
   message?: RawMessage;
   timestamp?: string;
   isMeta?: boolean;
+  isCompactSummary?: boolean;
   isSidechain?: boolean;
   isApiErrorMessage?: boolean;
-  isCompactSummary?: boolean;
   isVisibleInTranscriptOnly?: boolean;
 };
 
 const PROSE_TYPES = new Set(["user", "assistant"]);
+
+type DropReason =
+  | "non-prose-type"
+  | "isMeta"
+  | "isSidechain"
+  | "isApiErrorMessage"
+  | "isCompactSummary"
+  | "isVisibleInTranscriptOnly"
+  | "non-prose-role"
+  | "empty-text";
+
+function dropReason(raw: RawLine): DropReason | null {
+  if (raw.type !== undefined && !PROSE_TYPES.has(raw.type)) return "non-prose-type";
+  if (raw.isMeta === true) return "isMeta";
+  if (raw.isSidechain === true) return "isSidechain";
+  if (raw.isApiErrorMessage === true) return "isApiErrorMessage";
+  if (raw.isCompactSummary === true) return "isCompactSummary";
+  if (raw.isVisibleInTranscriptOnly === true) return "isVisibleInTranscriptOnly";
+  const role = raw.message?.role;
+  if (role !== "user" && role !== "assistant") return "non-prose-role";
+  return null;
+}
 
 function extractText(content: string | RawContentBlock[] | undefined): string {
   if (typeof content === "string") return content;
@@ -69,17 +91,9 @@ export function parseLine(line: string): LogEvent | null {
     return null;
   }
 
-  if (raw.type !== undefined && !PROSE_TYPES.has(raw.type)) return null;
+  if (dropReason(raw) !== null) return null;
 
-  if (raw.isMeta === true) return null;
-  if (raw.isSidechain === true) return null;
-  if (raw.isApiErrorMessage === true) return null;
-  if (raw.isCompactSummary === true) return null;
-  if (raw.isVisibleInTranscriptOnly === true) return null;
-
-  const role = raw.message?.role;
-  if (role !== "user" && role !== "assistant") return null;
-
+  const role = raw.message!.role as "user" | "assistant";
   const rawText = extractText(raw.message?.content);
   const text = stripHarnessTags(rawText);
   if (!text.trim()) return null;
