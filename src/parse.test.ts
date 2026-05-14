@@ -191,4 +191,39 @@ describe("parseJsonl", () => {
     const events = parseJsonl(line);
     expect(events[0]?.text).toBe("alpha\n\nomega");
   });
+
+  it("extracts usage.input_tokens / output_tokens when present (GAP-004)", () => {
+    const content = JSON.stringify({
+      message: {
+        role: "assistant",
+        content: "hi",
+        usage: { input_tokens: 1200, output_tokens: 340 },
+      },
+    });
+
+    const events = parseJsonl(content);
+    expect(events).toEqual([
+      { role: "assistant", text: "hi", tokensIn: 1200, tokensOut: 340 },
+    ]);
+  });
+
+  it("leaves tokensIn / tokensOut undefined when usage is missing or non-numeric", () => {
+    const content = [
+      JSON.stringify({ message: { role: "assistant", content: "no-usage" } }),
+      JSON.stringify({
+        message: {
+          role: "assistant",
+          content: "bad-usage",
+          usage: { input_tokens: "12", output_tokens: null },
+        },
+      }),
+    ].join("\n");
+
+    const events = parseJsonl(content);
+    expect(events).toHaveLength(2);
+    expect(events[0]).not.toHaveProperty("tokensIn");
+    expect(events[0]).not.toHaveProperty("tokensOut");
+    expect(events[1]).not.toHaveProperty("tokensIn");
+    expect(events[1]).not.toHaveProperty("tokensOut");
+  });
 });

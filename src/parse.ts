@@ -2,12 +2,15 @@ export type LogEvent = {
   role: "user" | "assistant";
   text: string;
   timestamp?: string;
+  tokensIn?: number;
+  tokensOut?: number;
 };
 
 type RawContentBlock = { type?: string; text?: string };
 type RawMessage = {
   role?: string;
   content?: string | RawContentBlock[];
+  usage?: { input_tokens?: unknown; output_tokens?: unknown };
 };
 type RawLine = {
   message?: RawMessage;
@@ -66,6 +69,14 @@ export function parseLine(line: string): LogEvent | null {
 
   const event: LogEvent = { role, text };
   if (typeof raw.timestamp === "string") event.timestamp = raw.timestamp;
+
+  const usage = raw.message?.usage;
+  if (usage && typeof usage.input_tokens === "number") {
+    event.tokensIn = usage.input_tokens;
+  }
+  if (usage && typeof usage.output_tokens === "number") {
+    event.tokensOut = usage.output_tokens;
+  }
   return event;
 }
 
