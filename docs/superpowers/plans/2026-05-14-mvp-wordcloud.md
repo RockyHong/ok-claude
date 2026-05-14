@@ -53,14 +53,14 @@
 
 ### Task 5: `aggregate.ts` — frequency + top-N
 
-- [ ] Function `aggregate(tokens: string[]): Map<string, number>`.
-- [ ] Function `topN(freq: Map<string, number>, n: number): Array<[string, number]>` — sort by count desc, tie-break by token asc.
-- [ ] Tests in `src/aggregate.test.ts`:
+- [x] Function `aggregate(tokens: string[]): Map<string, number>`.
+- [x] Function `topN(freq: Map<string, number>, n: number): Array<[string, number]>` — sort by count desc, tie-break by token asc.
+- [x] Tests in `src/aggregate.test.ts`:
   - empty input → empty map, empty topN
   - duplicates counted
   - tie-break verified (two tokens count 3 → lex order)
   - `n` larger than map size → returns all entries
-- [ ] Commit: `feat(aggregate): frequency map + topN with stable tie-break`.
+- [x] Commit: `feat(aggregate): frequency map + topN with stable tie-break`.
 
 ### Task 6: `discover.ts` — log file discovery
 
