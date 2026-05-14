@@ -21,7 +21,7 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 | ID | Slug                  | Title                                              | Rationale                                                                |
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
 | F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. Shipped.                     |
-| F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Core v1 promise per `docs/overview.md`.                                  |
+| F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Shipped. Two-tab split (You / Claude) with per-tab empty-state.          |
 | F3 | `cli-filters`         | `--project <name>`, `--since <window>`, `--top-n`  | Scope long histories / many-project users.                               |
 | F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
 | F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop per `docs/overview.md`.                   |
@@ -32,4 +32,25 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
-_(none — GAP-001 resolved; feature breakdown above replaces it.)_
+### GAP-004 — extract real token counts from JSONL for subhead
+
+- **Area:** `src/parse.ts`, `src/pipeline.ts`, `src/render.ts`
+- **Why it matters:** users care about token burn (proud-pain metric). Subhead currently shows session/message proxy — real `input_tokens` / `output_tokens` from Claude Code's assistant-line `usage` field is the share-worthy number ("burned 4.2M tokens this week").
+- **Surfaced during:** F2 brainstorm. Subhead question. Deferred — `parse.ts` only extracts role/text/timestamp; adding usage parse = own scope.
+- **Proposed fix:** extend `LogEvent` with optional `tokensIn` / `tokensOut`. Tolerant parse (field may be missing on older logs). Sum across events for subhead. Render as `4.2M tokens` next to message count.
+- **Open:** which field path exactly (Claude Code log schema not pinned here). Inspect a real JSONL during impl.
+
+### GAP-002 — denoise pasted code blocks before tokenization
+
+- **Area:** `src/tokenize.ts` (or new pre-tokenize step in `src/pipeline.ts`)
+- **Why it matters:** users paste JSON / Stack Overflow answers / code into Claude Code. Pasted blobs dominate frequency counts (e.g. `"id"` repeating 200× in one paste swamps user-typed vocabulary). Wordcloud reflects the paste, not the conversation.
+- **Surfaced during:** F2 brainstorm (counting-rule discussion). Decided not to fix counting semantics — attack the root cause instead.
+- **Proposed fix:** strip fenced code blocks (```` ``` ````) and indented code blocks from message text before tokenizing. Also consider stripping inline `` `code` `` spans. Leave prose intact.
+- **Open:** whether to also detect non-fenced pasted blobs (long whitespace-uniform stretches). Probably overkill — solve fenced case first, revisit with real data.
+
+### GAP-003 — revisit per-occurrence vs per-message counting
+
+- **Area:** `src/aggregate.ts` (or upstream in pipeline)
+- **Why it matters:** current rule = every token instance counts. "ok claude ok claude" in one message = 2. Preserves intensity (matches brand). But amplifies any per-message repetition pathology. Once GAP-002 ships, re-evaluate whether per-message dedup or a per-message cap improves signal.
+- **Surfaced during:** F2 brainstorm. Decided to keep per-occurrence for v1; defer reconsideration until F3 (`--project`, `--since` filters) + F4 (top-N table) ship and we can compare on real data.
+- **Proposed fix (if revisited):** per-message cap at N occurrences, or per-message dedup. Pick after data, not speculation.
