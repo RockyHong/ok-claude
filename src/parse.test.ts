@@ -354,4 +354,20 @@ describe("parseJsonl", () => {
 
     expect(events.map((e) => e.text)).toEqual(["kept"]);
   });
+
+  it("drops lines flagged isVisibleInTranscriptOnly: true even without isCompactSummary (forward-compat)", () => {
+    const content = [
+      JSON.stringify({
+        type: "user",
+        isVisibleInTranscriptOnly: true,
+        message: { role: "user", content: "transcript-only synthetic line" },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: "real user line" },
+      }),
+    ].join("\n");
+
+    expect(parseJsonl(content).map((e) => e.text)).toEqual(["real user line"]);
+  });
 });

@@ -20,6 +20,7 @@ type RawLine = {
   isSidechain?: boolean;
   isApiErrorMessage?: boolean;
   isCompactSummary?: boolean;
+  isVisibleInTranscriptOnly?: boolean;
 };
 
 const PROSE_TYPES = new Set(["user", "assistant"]);
@@ -74,6 +75,7 @@ export function parseLine(line: string): LogEvent | null {
   if (raw.isSidechain === true) return null;
   if (raw.isApiErrorMessage === true) return null;
   if (raw.isCompactSummary === true) return null;
+  if (raw.isVisibleInTranscriptOnly === true) return null;
 
   const role = raw.message?.role;
   if (role !== "user" && role !== "assistant") return null;
