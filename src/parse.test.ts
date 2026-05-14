@@ -116,4 +116,20 @@ describe("parseJsonl", () => {
   it("returns empty array for empty input", () => {
     expect(parseJsonl("")).toEqual([]);
   });
+
+  it("skips lines flagged isMeta: true (harness-injected)", () => {
+    const content = [
+      JSON.stringify({
+        isMeta: true,
+        message: { role: "user", content: "harness-injected skill body" },
+      }),
+      JSON.stringify({
+        message: { role: "user", content: "human-typed line" },
+      }),
+    ].join("\n");
+
+    const events = parseJsonl(content);
+
+    expect(events.map((e) => e.text)).toEqual(["human-typed line"]);
+  });
 });
