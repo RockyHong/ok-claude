@@ -111,3 +111,40 @@ describe("renderHtml — empty-state per tab", () => {
     expect(html).toMatch(/"topClaude"\s*:\s*\[\s*\]/);
   });
 });
+
+function inputWithTokens(over: Partial<RenderInput["meta"]> = {}): RenderInput {
+  return {
+    topUser: [["foo", 3]],
+    topClaude: [["bar", 2]],
+    meta: {
+      sessions: 1,
+      messages: 4,
+      tokensIn: over.tokensIn ?? 0,
+      tokensOut: over.tokensOut ?? 0,
+      dateRange: over.dateRange ?? null,
+    },
+  };
+}
+
+describe("renderHtml — token subhead (GAP-004)", () => {
+  it("includes a formatted token total when tokensIn + tokensOut > 0", () => {
+    const html = renderHtml(
+      inputWithTokens({ tokensIn: 4_000_000, tokensOut: 200_000 }),
+    );
+    expect(html).toContain("4.2M tokens");
+  });
+
+  it("formats thousands with K suffix", () => {
+    const html = renderHtml(
+      inputWithTokens({ tokensIn: 12_000, tokensOut: 3_400 }),
+    );
+    expect(html).toContain("15.4K tokens");
+  });
+
+  it("omits the tokens segment when sum is zero (older logs)", () => {
+    const html = renderHtml(inputWithTokens({ tokensIn: 0, tokensOut: 0 }));
+    // tokensIn/tokensOut keys leak into the inlined __DATA__ JSON; only
+    // assert the rendered subhead segment (" tokens · " / "M tokens" / "K tokens") is absent.
+    expect(html).not.toMatch(/ tokens/);
+  });
+});

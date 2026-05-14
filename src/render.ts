@@ -21,13 +21,22 @@ function safeJson(value: unknown): string {
   return JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1");
 }
 
+function formatTokens(total: number): string {
+  if (total >= 1_000_000) return `${(total / 1_000_000).toFixed(1)}M`;
+  if (total >= 1_000) return `${(total / 1_000).toFixed(1)}K`;
+  return String(total);
+}
+
 function formatSubhead(meta: RenderInput["meta"]): string {
   const range = meta.dateRange
     ? ` · ${meta.dateRange[0]} → ${meta.dateRange[1]}`
     : "";
   const sNoun = meta.sessions === 1 ? "session" : "sessions";
   const mNoun = meta.messages === 1 ? "message" : "messages";
-  return `${meta.sessions} ${sNoun} · ${meta.messages} ${mNoun}${range}`;
+  const totalTokens = meta.tokensIn + meta.tokensOut;
+  const tokens =
+    totalTokens > 0 ? `${formatTokens(totalTokens)} tokens · ` : "";
+  return `${tokens}${meta.sessions} ${sNoun} · ${meta.messages} ${mNoun}${range}`;
 }
 
 export function renderHtml(input: RenderInput): string {
