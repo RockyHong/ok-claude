@@ -64,11 +64,11 @@
 
 ### Task 6: `discover.ts` — log file discovery
 
-- [ ] Function `discoverLogs(): Promise<string[]>` — uses `node:fs/promises.readdir` recursively on `path.join(os.homedir(), ".claude", "projects")`.
-- [ ] Filter to `.jsonl` files. Sorted for determinism.
-- [ ] If root dir does not exist (ENOENT), return `[]`.
-- [ ] No vitest unit test — touches real filesystem. Cover via integration smoke (Task 9).
-- [ ] Commit: `feat(discover): glob ~/.claude/projects/**/*.jsonl`.
+- [x] Function `discoverLogs(): Promise<string[]>` — uses `node:fs/promises.readdir` recursively on `path.join(os.homedir(), ".claude", "projects")`.
+- [x] Filter to `.jsonl` files. Sorted for determinism.
+- [x] If root dir does not exist (ENOENT), return `[]`.
+- [x] No vitest unit test — touches real filesystem. Cover via integration smoke (Task 9).
+- [x] Commit: `feat(discover): glob ~/.claude/projects/**/*.jsonl`.
 
 ### Task 7: `render.ts` — HTML template
 
