@@ -10,11 +10,22 @@ function jsonl(...lines: object[]): string {
   return lines.map((l) => JSON.stringify(l)).join("\n") + "\n";
 }
 
+function extractData(html: string): {
+  topUser: Array<[string, number]>;
+  topClaude: Array<[string, number]>;
+  meta: { sessions: number; messages: number; dateRange: [string, string] | null };
+} {
+  const m = html.match(/window\.__DATA__ = ({[\s\S]*?});/);
+  if (!m) throw new Error("__DATA__ payload not found in HTML");
+  return JSON.parse(m[1]);
+}
+
 describe("pipeline.run — speaker split", () => {
   let homeDir: string;
-  let prevHome: string | undefined;
-  let prevCwd: string;
   let outDir: string;
+  let prevHome: string | undefined;
+  let prevUserProfile: string | undefined;
+  let prevCwd: string;
 
   beforeEach(() => {
     homeDir = mkdtempSync(join(tmpdir(), "okc-home-"));
@@ -31,7 +42,10 @@ describe("pipeline.run — speaker split", () => {
     );
     prevHome = process.env.HOME;
     process.env.HOME = homeDir;
-    if (process.platform === "win32") process.env.USERPROFILE = homeDir;
+    if (process.platform === "win32") {
+      prevUserProfile = process.env.USERPROFILE;
+      process.env.USERPROFILE = homeDir;
+    }
     prevCwd = process.cwd();
     process.chdir(outDir);
   });
@@ -40,26 +54,36 @@ describe("pipeline.run — speaker split", () => {
     process.chdir(prevCwd);
     if (prevHome === undefined) delete process.env.HOME;
     else process.env.HOME = prevHome;
+    if (process.platform === "win32") {
+      if (prevUserProfile === undefined) delete process.env.USERPROFILE;
+      else process.env.USERPROFILE = prevUserProfile;
+    }
     rmSync(homeDir, { recursive: true, force: true });
     rmSync(outDir, { recursive: true, force: true });
   });
 
-  it("emits per-speaker topN arrays and a message count into the rendered HTML", async () => {
+  it("partitions tokens by speaker and reports the total message count", async () => {
     const result = await run();
     expect(result.outPath).toBeTruthy();
     const html = await readFile(result.outPath!, "utf8");
 
-    // both arrays present under __DATA__
-    expect(html).toContain("topUser");
-    expect(html).toContain("topClaude");
+    const data = extractData(html);
+    const userWords = data.topUser.map((p) => p[0]);
+    const claudeWords = data.topClaude.map((p) => p[0]);
 
-    // user-only tokens in topUser (not in topClaude)
-    expect(html).toMatch(/"topUser"\s*:\s*\[[\s\S]*?"hello"/);
-    expect(html).toMatch(/"topUser"\s*:\s*\[[\s\S]*?"claude"/);
-    // assistant-only tokens in topClaude (not in topUser)
-    expect(html).toMatch(/"topClaude"\s*:\s*\[[\s\S]*?"absolutely"/);
+    // user-only tokens land in topUser, NOT topClaude
+    expect(userWords).toContain("hello");
+    expect(userWords).toContain("claude");
+    expect(claudeWords).not.toContain("hello");
+    expect(claudeWords).not.toContain("claude");
 
-    // total message count surfaced in __DATA__ meta
-    expect(html).toMatch(/"messages"\s*:\s*3/);
+    // assistant-only tokens land in topClaude, NOT topUser
+    expect(claudeWords).toContain("absolutely");
+    expect(claudeWords).toContain("indeed");
+    expect(userWords).not.toContain("absolutely");
+    expect(userWords).not.toContain("indeed");
+
+    // total message count surfaced in meta
+    expect(data.meta.messages).toBe(3);
   });
 });
