@@ -8,21 +8,21 @@
 
 ### Task 1: Repo scaffold
 
-- [ ] `package.json` — name `whatdidclaudesay`, `type: "module"`, `bin: { whatdidclaudesay: "dist/cli.js" }`, `engines.node: ">=20"`, license MIT.
-- [ ] Dev deps: `typescript`, `tsx`, `tsup`, `vitest`, `@types/node`.
-- [ ] Runtime deps: `commander` (kept for F3; harmless in v1), `open`.
-- [ ] `tsconfig.json` — strict, `target: ES2022`, `module: NodeNext`, `moduleResolution: NodeNext`.
-- [ ] `tsup.config.ts` — entry `src/cli.ts`, format `esm`, banner `#!/usr/bin/env node`, single-file bundle to `dist/cli.js`, `chmod 755` post-build.
-- [ ] `vitest.config.ts` — defaults.
-- [ ] `.gitignore` — `node_modules/`, `dist/`, `whatdidclaudesay-output.html`, `*.log`.
-- [ ] Commit: `chore: scaffold package + tsconfig + bundler`.
+- [x] `package.json` — name `whatdidclaudesay`, `type: "module"`, `bin: { whatdidclaudesay: "dist/cli.js" }`, `engines.node: ">=20"`, license MIT.
+- [x] Dev deps: `typescript`, `tsx`, `tsup`, `vitest`, `@types/node`.
+- [x] Runtime deps: `commander` (kept for F3; harmless in v1), `open`.
+- [x] `tsconfig.json` — strict, `target: ES2022`, `module: NodeNext`, `moduleResolution: NodeNext`.
+- [x] `tsup.config.ts` — entry `src/cli.ts`, format `esm`, banner `#!/usr/bin/env node`, single-file bundle to `dist/cli.js`, `chmod 755` post-build.
+- [x] `vitest.config.ts` — defaults.
+- [x] `.gitignore` — `node_modules/`, `dist/`, `whatdidclaudesay-output.html`, `*.log`.
+- [x] Commit: `chore: scaffold package + tsconfig + bundler`.
 
 ### Task 2: Vendor `wordcloud2.js`
 
-- [ ] Download `wordcloud2.js` minified release into `src/vendor/wordcloud2.min.js`.
-- [ ] Add source URL + version + license header at top of vendored file.
-- [ ] Add `src/vendor/README.md` explaining vendoring policy (no CDN, copied at build time).
-- [ ] Commit: `chore: vendor wordcloud2.js for offline HTML output`.
+- [x] Download `wordcloud2.js` release into `src/vendor/wordcloud2.js`. *(npm `wordcloud@1.2.3` ships no min build — vendored the unminified source; ~37 KB inline is acceptable.)*
+- [x] Add source URL + version + license header at top of vendored file.
+- [x] Add `src/vendor/README.md` explaining vendoring policy (no CDN, copied at build time).
+- [x] Commit: `chore: vendor wordcloud2.js for offline HTML output`.
 
 ### Task 3: `parse.ts` — JSONL → events
 
@@ -73,7 +73,7 @@
 ### Task 7: `render.ts` — HTML template
 
 - [ ] Function `renderHtml(topNData: Array<[string, number]>, meta: { sessions: number; dateRange: [string, string] | null }): string`.
-- [ ] Read vendored `src/vendor/wordcloud2.min.js` as string (use `import.meta.url` + `fs.readFile`, or bundle as string via tsup's `loader: { ".js": "text" }`).
+- [ ] Read vendored `src/vendor/wordcloud2.js` as string (use `import.meta.url` + `fs.readFile`, or bundle as string via tsup's `loader: { ".js": "text" }`).
 - [ ] String-interpolate into template:
   - `<style>` block (pure CSS — viewport-fitting canvas, header layout).
   - Inlined `wordcloud2.js` content inside `<script>`.
