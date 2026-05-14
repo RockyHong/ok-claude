@@ -27,8 +27,10 @@ const ERROR_CLASS = /[A-Z][a-zA-Z]+(Error|Exception)\b/;
 // Mono JIT native-code frame: hex address followed by "(Mono JIT Code)" or "(Mono)"
 const MONO_JIT_FRAME = /^0x[0-9a-fA-F]+\s+\(Mono/;
 // Gradle / Android build tool diagnostic line
+// Requires colon after WARNING/ERROR/FAILURE to avoid matching prose like
+// "ERROR in my understanding" — real Gradle output uses "WARNING:", "ERROR:".
 const BUILD_WARNING =
-  /^(?:WARNING|ERROR|FAILURE|> (?:Task|Configure project)|BUILD FAILED)\b/;
+  /^(?:WARNING:|ERROR:|FAILURE:|> (?:Task|Configure project)|BUILD FAILED)\b/;
 
 function looksLikeStackOrError(line: string): boolean {
   if (STACK_FRAME_LINE.test(line)) return true;

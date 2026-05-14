@@ -222,4 +222,16 @@ describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
     expect(out).not.toContain("unityLibrary");
     expect(out).not.toContain("UP-TO-DATE");
   });
+
+  it("does NOT strip all-caps prose runs that look like build-error keywords (BUILD_WARNING false-positive guard)", () => {
+    const input = [
+      "ERROR in my understanding was that the auth flow used cookies",
+      "WARNING the next step required a token refresh",
+      "FAILURE was inevitable because we forgot to rotate keys",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("ERROR in my understanding");
+    expect(out).toContain("WARNING the next step");
+    expect(out).toContain("FAILURE was inevitable");
+  });
 });
