@@ -16,6 +16,7 @@ type RawLine = {
   message?: RawMessage;
   timestamp?: string;
   isMeta?: boolean;
+  isCompactSummary?: boolean;
 };
 
 function extractText(content: string | RawContentBlock[] | undefined): string {
@@ -63,6 +64,7 @@ export function parseLine(line: string): LogEvent | null {
   }
 
   if (raw.isMeta === true) return null;
+  if (raw.isCompactSummary === true) return null;
 
   const role = raw.message?.role;
   if (role !== "user" && role !== "assistant") return null;

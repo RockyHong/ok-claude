@@ -117,6 +117,26 @@ describe("parseJsonl", () => {
     expect(parseJsonl("")).toEqual([]);
   });
 
+  it("skips lines flagged isCompactSummary: true (CC auto-conversation-summary)", () => {
+    const content = [
+      JSON.stringify({
+        isCompactSummary: true,
+        message: {
+          role: "user",
+          content:
+            "Key Technical Concepts: ChewLingo monorepo: Next.js + React Native",
+        },
+      }),
+      JSON.stringify({
+        message: { role: "user", content: "real user text" },
+      }),
+    ].join("\n");
+
+    const events = parseJsonl(content);
+
+    expect(events.map((e) => e.text)).toEqual(["real user text"]);
+  });
+
   it("skips lines flagged isMeta: true (harness-injected)", () => {
     const content = [
       JSON.stringify({
