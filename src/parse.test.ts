@@ -371,3 +371,195 @@ describe("parseJsonl", () => {
     expect(parseJsonl(content).map((e) => e.text)).toEqual(["real user line"]);
   });
 });
+
+describe("parseJsonl — cc-log-schema § Anonymized samples (GAP-009 B)", () => {
+  type Fixture = {
+    name: string;
+    line: Record<string, unknown>;
+    kept: boolean;
+    expectedText?: string;
+  };
+
+  const fixtures: Fixture[] = [
+    {
+      name: "user-plain",
+      line: {
+        type: "user",
+        isSidechain: false,
+        message: { role: "user", content: "hello prompt" },
+      },
+      kept: true,
+      expectedText: "hello prompt",
+    },
+    {
+      name: "user-meta (isMeta)",
+      line: {
+        type: "user",
+        isSidechain: false,
+        isMeta: true,
+        message: { role: "user", content: "meta payload" },
+      },
+      kept: false,
+    },
+    {
+      name: "user-compactSummary",
+      line: {
+        type: "user",
+        isSidechain: false,
+        isCompactSummary: true,
+        isVisibleInTranscriptOnly: true,
+        message: { role: "user", content: "summary payload" },
+      },
+      kept: false,
+    },
+    {
+      name: "user-sidechain (was leaking)",
+      line: {
+        type: "user",
+        isSidechain: true,
+        message: { role: "user", content: "subagent prompt" },
+      },
+      kept: false,
+    },
+    {
+      name: "user-toolResult (no text block)",
+      line: {
+        type: "user",
+        isSidechain: false,
+        message: {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "tu",
+              content: [{ type: "tool_reference", tool_name: "WebSearch" }],
+            },
+          ],
+        },
+      },
+      kept: false,
+    },
+    {
+      name: "assistant-plain",
+      line: {
+        type: "assistant",
+        isSidechain: false,
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "reply" }],
+        },
+      },
+      kept: true,
+      expectedText: "reply",
+    },
+    {
+      name: "assistant-sidechain (was leaking)",
+      line: {
+        type: "assistant",
+        isSidechain: true,
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "subagent reply" }],
+        },
+      },
+      kept: false,
+    },
+    {
+      name: "assistant-apiError (was leaking)",
+      line: {
+        type: "assistant",
+        isSidechain: false,
+        isApiErrorMessage: true,
+        error: "rate_limit",
+        apiErrorStatus: 429,
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "rate-limited" }],
+        },
+      },
+      kept: false,
+    },
+    {
+      name: "system",
+      line: {
+        type: "system",
+        subtype: "compact_boundary",
+        content: "Conversation compacted",
+      },
+      kept: false,
+    },
+    {
+      name: "attachment",
+      line: {
+        type: "attachment",
+        attachment: { type: "hook_success", hookName: "SessionStart:startup" },
+      },
+      kept: false,
+    },
+    {
+      name: "progress",
+      line: { type: "progress", content: "subagent progress" },
+      kept: false,
+    },
+    {
+      name: "last-prompt",
+      line: { type: "last-prompt", lastPrompt: "cached prompt" },
+      kept: false,
+    },
+    {
+      name: "ai-title",
+      line: { type: "ai-title", aiTitle: "Session Title" },
+      kept: false,
+    },
+    {
+      name: "file-history-snapshot",
+      line: {
+        type: "file-history-snapshot",
+        messageId: "x",
+        snapshot: { trackedFileBackups: {} },
+      },
+      kept: false,
+    },
+    {
+      name: "permission-mode",
+      line: { type: "permission-mode", permissionMode: "auto" },
+      kept: false,
+    },
+    {
+      name: "queue-operation",
+      line: {
+        type: "queue-operation",
+        operation: "enqueue",
+        content: "queued",
+      },
+      kept: false,
+    },
+    {
+      name: "custom-title",
+      line: { type: "custom-title", customTitle: "Renamed" },
+      kept: false,
+    },
+    {
+      name: "agent-name",
+      line: { type: "agent-name", agentName: "named-agent" },
+      kept: false,
+    },
+    {
+      name: "legacy summary (forward-compat)",
+      line: { type: "summary", summary: "legacy", leafUuid: "y" },
+      kept: false,
+    },
+  ];
+
+  for (const fx of fixtures) {
+    it(`${fx.kept ? "keeps" : "drops"} ${fx.name}`, () => {
+      const events = parseJsonl(JSON.stringify(fx.line));
+      if (fx.kept) {
+        expect(events).toHaveLength(1);
+        expect(events[0]?.text).toBe(fx.expectedText);
+      } else {
+        expect(events).toEqual([]);
+      }
+    });
+  }
+});
