@@ -299,6 +299,30 @@ describe("parseJsonl", () => {
     expect(parseJsonl(content).map((e) => e.text)).toEqual(["human typed"]);
   });
 
+  it("drops assistant lines flagged isApiErrorMessage: true (rate-limit stubs — GAP-009)", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        isApiErrorMessage: true,
+        error: "rate_limit",
+        apiErrorStatus: 429,
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "rate limit hit" }],
+        },
+      }),
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: "real reply" }],
+        },
+      }),
+    ].join("\n");
+
+    expect(parseJsonl(content).map((e) => e.text)).toEqual(["real reply"]);
+  });
+
   it("drops non-prose line types via PROSE_TYPES whitelist (includes legacy summary)", () => {
     const dropTypes = [
       "system",
