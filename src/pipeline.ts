@@ -1,10 +1,12 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+
 import { discoverLogs, logsRoot } from "./discover.js";
-import { parseJsonl, type LogEvent } from "./parse.js";
+import { streamEvents } from "./stream.js";
 import { tokenize } from "./tokenize.js";
-import { aggregate, topN } from "./aggregate.js";
+import { topN } from "./aggregate.js";
 import { renderHtml } from "./render.js";
+import { createProgress } from "./progress.js";
 
 const OUTPUT_FILE = "ok-claude-output.html";
 const TOP_N = 100;
@@ -12,29 +14,6 @@ const TOP_N = 100;
 export type RunResult =
   | { outPath: string; reason?: undefined }
   | { outPath: null; reason: string };
-
-function dateRangeOf(events: LogEvent[]): [string, string] | null {
-  let min: string | undefined;
-  let max: string | undefined;
-  for (const e of events) {
-    if (!e.timestamp) continue;
-    if (min === undefined || e.timestamp < min) min = e.timestamp;
-    if (max === undefined || e.timestamp > max) max = e.timestamp;
-  }
-  if (min === undefined || max === undefined) return null;
-  return [min, max];
-}
-
-function topForRole(
-  events: LogEvent[],
-  role: "user" | "assistant",
-): Array<[string, number]> {
-  const text = events
-    .filter((e) => e.role === role)
-    .map((e) => e.text)
-    .join("\n");
-  return topN(aggregate(tokenize(text)), TOP_N);
-}
 
 export async function run(): Promise<RunResult> {
   const files = await discoverLogs();
@@ -45,27 +24,45 @@ export async function run(): Promise<RunResult> {
     };
   }
 
-  const events: LogEvent[] = [];
-  for (const entry of files) {
-    let content: string;
-    try {
-      content = await readFile(entry.path, "utf8");
-    } catch {
-      continue;
-    }
-    for (const e of parseJsonl(content)) events.push(e);
-  }
+  const totalBytes = files.reduce((s, f) => s + f.size, 0);
+  const progress = createProgress(totalBytes, files.length);
 
-  const topUser = topForRole(events, "user");
-  const topClaude = topForRole(events, "assistant");
+  const userMap = new Map<string, number>();
+  const claudeMap = new Map<string, number>();
+  let messages = 0;
+  let tokensIn = 0;
+  let tokensOut = 0;
+  let minTs: string | undefined;
+  let maxTs: string | undefined;
+
+  for await (const e of streamEvents(files, progress.tick)) {
+    const map = e.role === "user" ? userMap : claudeMap;
+    for (const tok of tokenize(e.text)) {
+      map.set(tok, (map.get(tok) ?? 0) + 1);
+    }
+    messages++;
+    if (typeof e.tokensIn === "number") tokensIn += e.tokensIn;
+    if (typeof e.tokensOut === "number") tokensOut += e.tokensOut;
+    if (e.timestamp) {
+      if (minTs === undefined || e.timestamp < minTs) minTs = e.timestamp;
+      if (maxTs === undefined || e.timestamp > maxTs) maxTs = e.timestamp;
+    }
+  }
+  progress.done();
+
+  const topUser = topN(userMap, TOP_N);
+  const topClaude = topN(claudeMap, TOP_N);
 
   const html = renderHtml({
     topUser,
     topClaude,
     meta: {
       sessions: files.length,
-      messages: events.length,
-      dateRange: dateRangeOf(events),
+      messages,
+      tokensIn,
+      tokensOut,
+      dateRange:
+        minTs !== undefined && maxTs !== undefined ? [minTs, maxTs] : null,
     },
   });
 

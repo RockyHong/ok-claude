@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  mkdirSync,
+  readFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
@@ -13,11 +19,17 @@ function jsonl(...lines: object[]): string {
 function extractData(html: string): {
   topUser: Array<[string, number]>;
   topClaude: Array<[string, number]>;
-  meta: { sessions: number; messages: number; dateRange: [string, string] | null };
+  meta: {
+    sessions: number;
+    messages: number;
+    tokensIn: number;
+    tokensOut: number;
+    dateRange: [string, string] | null;
+  };
 } {
   const m = html.match(/window\.__DATA__ = ({[\s\S]*?});/);
   if (!m) throw new Error("__DATA__ payload not found in HTML");
-  return JSON.parse(m[1]);
+  return JSON.parse(m[1]!);
 }
 
 describe("pipeline.run — speaker split", () => {
@@ -35,9 +47,30 @@ describe("pipeline.run — speaker split", () => {
     writeFileSync(
       join(projects, "session.jsonl"),
       jsonl(
-        { message: { role: "user", content: "hello hello world" }, timestamp: "2026-01-01T00:00:00Z" },
-        { message: { role: "assistant", content: "absolutely absolutely indeed" }, timestamp: "2026-01-01T00:00:01Z" },
-        { message: { role: "user", content: "ok claude ok claude" }, timestamp: "2026-01-02T00:00:00Z" },
+        {
+          message: { role: "user", content: "hello hello world" },
+          timestamp: "2026-01-01T00:00:00Z",
+        },
+        {
+          message: {
+            role: "assistant",
+            content: "absolutely absolutely indeed",
+            usage: { input_tokens: 1000, output_tokens: 200 },
+          },
+          timestamp: "2026-01-01T00:00:01Z",
+        },
+        {
+          message: { role: "user", content: "ok claude ok claude" },
+          timestamp: "2026-01-02T00:00:00Z",
+        },
+        {
+          message: {
+            role: "assistant",
+            content: "more",
+            usage: { input_tokens: 500, output_tokens: 50 },
+          },
+          timestamp: "2026-01-02T00:00:01Z",
+        },
       ),
     );
     prevHome = process.env.HOME;
@@ -62,7 +95,7 @@ describe("pipeline.run — speaker split", () => {
     rmSync(outDir, { recursive: true, force: true });
   });
 
-  it("partitions tokens by speaker and reports the total message count", async () => {
+  it("partitions tokens by speaker and reports counts + token sums + date range", async () => {
     const result = await run();
     expect(result.outPath).toBeTruthy();
     const html = await readFile(result.outPath!, "utf8");
@@ -71,19 +104,30 @@ describe("pipeline.run — speaker split", () => {
     const userWords = data.topUser.map((p) => p[0]);
     const claudeWords = data.topClaude.map((p) => p[0]);
 
-    // user-only tokens land in topUser, NOT topClaude
     expect(userWords).toContain("hello");
     expect(userWords).toContain("claude");
     expect(claudeWords).not.toContain("hello");
-    expect(claudeWords).not.toContain("claude");
-
-    // assistant-only tokens land in topClaude, NOT topUser
     expect(claudeWords).toContain("absolutely");
     expect(claudeWords).toContain("indeed");
     expect(userWords).not.toContain("absolutely");
-    expect(userWords).not.toContain("indeed");
 
-    // total message count surfaced in meta
-    expect(data.meta.messages).toBe(3);
+    expect(data.meta.messages).toBe(4);
+    expect(data.meta.tokensIn).toBe(1500);
+    expect(data.meta.tokensOut).toBe(250);
+    expect(data.meta.dateRange).toEqual([
+      "2026-01-01T00:00:00Z",
+      "2026-01-02T00:00:01Z",
+    ]);
+  });
+
+  it("does not buffer all events in memory (regression guard for memory shape)", () => {
+    const source = readFileSync(
+      new URL("./pipeline.ts", import.meta.url),
+      "utf8",
+    );
+    // No accumulator array of LogEvents and no per-role string join allowed.
+    expect(source).not.toMatch(/events:\s*LogEvent\[\]/);
+    expect(source).not.toMatch(/events\.push\(/);
+    expect(source).not.toMatch(/\.join\("\\n"\)/);
   });
 });

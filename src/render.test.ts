@@ -8,6 +8,8 @@ function input(over: Partial<RenderInput> = {}): RenderInput {
     meta: {
       sessions: over.meta?.sessions ?? 1,
       messages: over.meta?.messages ?? 4,
+      tokensIn: over.meta?.tokensIn ?? 0,
+      tokensOut: over.meta?.tokensOut ?? 0,
       dateRange: over.meta?.dateRange ?? null,
     },
   };
@@ -32,6 +34,8 @@ describe("renderHtml", () => {
         meta: {
           sessions: 42,
           messages: 312,
+          tokensIn: 0,
+          tokensOut: 0,
           dateRange: ["2026-01-01", "2026-05-14"],
         },
       }),
@@ -44,7 +48,15 @@ describe("renderHtml", () => {
 
   it("uses singular nouns when counts are 1", () => {
     const html = renderHtml(
-      input({ meta: { sessions: 1, messages: 1, dateRange: null } }),
+      input({
+        meta: {
+          sessions: 1,
+          messages: 1,
+          tokensIn: 0,
+          tokensOut: 0,
+          dateRange: null,
+        },
+      }),
     );
     expect(html).toContain("1 session ");
     expect(html).toContain("1 message");

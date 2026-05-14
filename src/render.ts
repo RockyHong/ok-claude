@@ -11,6 +11,8 @@ export type RenderInput = {
   meta: {
     sessions: number;
     messages: number;
+    tokensIn: number;
+    tokensOut: number;
     dateRange: [string, string] | null;
   };
 };
