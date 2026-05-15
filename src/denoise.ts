@@ -34,6 +34,7 @@ export function denoiseMarkdown(text: string): string {
   let out = text.replace(FENCED_BLOCK, " ");
   out = out.replace(UNTERMINATED_FENCE, " ");
   out = stripIndentedBlocks(out);
+  out = stripLongStructuredLines(out);
   out = stripNonFencedPasteBlocks(out);
   out = out.replace(INLINE_BACKTICK, " ");
   out = out.replace(STACK_FRAME_SINGLE, " ");
@@ -70,6 +71,24 @@ const BUILD_WARNING =
 const STRUCT_CHARS = new Set('{}[]():,;"=\'|<>');
 const STRUCT_DENSITY_THRESHOLD = 0.22;
 const STRUCT_MIN_LINE_LEN = 20;
+// Single-line megablob: lines that are very long AND structurally dense are
+// paste artefacts on their own (no 3+ streak required). Real-corpus shape:
+// a `Body: {...}` HTTP-error paste arrives as one 2,000+ char line. 200-char
+// floor is far above any in-prose JSON discussion (e.g. `{"ok":true}` ≈ 12 chars).
+const STRUCT_INLINE_MIN_LEN = 200;
+
+function stripLongStructuredLines(text: string): string {
+  const lines = text.split("\n");
+  return lines
+    .map((l) => {
+      const nws = l.replace(/\s/g, "");
+      if (nws.length < STRUCT_INLINE_MIN_LEN) return l;
+      let hits = 0;
+      for (const c of nws) if (STRUCT_CHARS.has(c)) hits++;
+      return hits / nws.length >= STRUCT_DENSITY_THRESHOLD ? "" : l;
+    })
+    .join("\n");
+}
 
 function looksLikeStructuredLine(line: string): boolean {
   const nws = line.replace(/\s/g, "");
