@@ -48,23 +48,6 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 - **Surfaced during:** GAP-009 wrap-up wet-run review (audit showed `don` in top-100 user vocab).
 - **TDD shape:** 6+ new tests under denoise.test.ts → don't/won't/can't/isn't/wasn't/wouldn't → expected post-denoise text.
 
-### GAP-010 — file path / filename fragments leak via tokenizer word-boundary splits
-
-- **Area:** `src/denoise.ts` (new path-strip pass before tokenize)
-- **Why it matters:** post-GAP-009 wet-run grep of `src` (claimed by user as "NEVER said") returned 12/12 samples that are file paths or stack frames: `apps/backend/src/modules/srs/skewer.ts`, `D:\Git\ChewLingo\apps\backend\src\prompts\wordMarker.prompts.ts`, `at View (src\shims\react-native-shim.js:62:10)`, etc. Tokenizer splits on word boundaries so `apps/backend/src/foo.ts` → `apps`, `backend`, `src`, `foo`, `ts` all enter vocab. Same class drives `program` (Program.cs), `gradle` (Unity build path `Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\...`), `android`, partially `unity`. These are pastes, NOT user prose.
-- **Paste-denoise threshold of 3+ lines is too coarse:** file-path mentions in spec bullets / single-line stack frames are 1-2 line embeds inside prose, below the run threshold.
-- **Proposed fix:** add a path-strip pass to `denoiseMarkdown` BEFORE tokenize. Three patterns:
-
-  ```ts
-  const WIN_PATH = /[A-Za-z]:\\[\w\\.\-]+/g;                                  // D:\Foo\Bar\baz.ts
-  const PATH_FRAGMENT = /\b[\w.\-]+[\\/][\w.\-]+(?:[\\/][\w.\-]+)*/g;         // apps/backend/src/foo.ts, src\shims\bar.js
-  const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*:\d+(?::\d+)?\)/g;    // at Foo.Bar (path:line:col)
-  ```
-
-  Replace each match with space pre-tokenize. Aggressive but file paths aren't natural language.
-- **Surfaced during:** GAP-009 wrap-up. User strong claim "NEVER said src" → grep showed 100% paste origin.
-- **TDD shape:** fixture tests from real samples (file paths in spec bullets, RN stack frames, Windows abs paths, Unity build paths). Wet-run verify — `src`, `program`, `gradle`, `android` counts should drop substantially.
-
 ### GAP-011 — Unity-native stack frame variant `(Unity) StackWalker::` not matched
 
 - **Area:** `src/denoise.ts` (MONO_JIT_FRAME regex)
