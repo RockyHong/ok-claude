@@ -6,3 +6,5 @@ ok-claude-output.html
 scripts/
 
 tmp/
+
+.claude/settings.local.json
