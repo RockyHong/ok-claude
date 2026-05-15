@@ -199,6 +199,15 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("talking about config");
     expect(out).toContain("back to talking");
   });
+
+  it("preserves a single dense-punctuation prose line", () => {
+    const input = "the array is [a, b, c]: each is {name, age, role} and we need a, b, c, d.";
+    const out = denoiseMarkdown(input);
+    // Single line ≈ density 0.21 — below threshold AND would still need
+    // the 3+ streak guard. Preserved either way.
+    expect(out).toContain("the array is");
+    expect(out).toContain("we need");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
