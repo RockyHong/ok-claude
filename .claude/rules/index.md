@@ -8,7 +8,7 @@
 
 ## Active rules
 
-None yet. No Phase 1 signals (frontend component dir, MV3 manifest, migrations, tests dir) fired during bootstrap or sync passes. Add rules below as path-scoped patterns emerge.
+None yet. CLI surface — no frontend component dir, no MV3 manifest, no migrations. Co-located `*.test.ts` patterns covered by `docs/techstack.md` § Coding Patterns (no path-scoped enforcement need). Add rules below as path-scoped patterns emerge.
 
 ## Adding a new rule
 

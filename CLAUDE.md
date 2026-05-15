@@ -24,7 +24,7 @@ Every session runs under the superpowers frame. Routing = **which phases this wo
 | **Plan** | Multi-step, ordering matters, want checkpoint review, half-done risk | Single atomic edit obvious from context |
 | **Execute (TDD + verify)** | Touching code | Always-on when code changes — never skip discipline |
 | **Doc sync** | Pre-commit | Always-on — never skip |
-| **Commit (`/commit`)** | Work done | Always-on — terminal step |
+| **Commit (`/super-bootstrap:commit`)** | Work done | Always-on — terminal step. |
 
 ### Triage output
 
@@ -64,13 +64,15 @@ Before every commit, scan `docs/` for files describing behavior touched by the d
 
 **Temporal cleanup:** if work completes a feature branch, delete its spec and plan files from `docs/superpowers/specs/` and `docs/superpowers/plans/`. Once merged, they're noise.
 
+**Roadmap cleanup:** if work ships a feature listed in `docs/overview.md` § Roadmap, remove that line — feature now belongs to product narrative (Problem / Current State / Module Index), not the forward list.
+
 **Backlog cleanup:** if work resolves a `BUG-###` / `DEBT-###` / `GAP-###` from `docs/backlog.md`, delete that item. Git history is the archive.
 
 ## Coding Principles
 
-- **Think before coding.** State assumptions. If multiple valid interpretations exist, present them — don't pick silently. If unclear, stop and ask.
-- **Simplicity first.** Minimum code that solves it. No speculative abstraction, no flexibility nobody asked for, no error handling for impossible scenarios.
-- **Surgical changes.** Touch only what you must. Don't refactor adjacent code, don't reformat, match existing style. Remove orphans your changes create — leave pre-existing dead code alone.
+Before writing, reviewing, or refactoring code, invoke the `karpathy-guidelines` skill.
+
+It owns four principles (think-before-coding, simplicity-first, surgical-changes, goal-driven-execution). Skill body is upstream — don't paraphrase it here. Pin lives in `.claude/settings.json` (`andrej-karpathy-skills@karpathy-skills`).
 
 ## Edit Discipline — Renames & Replace-All
 
@@ -117,7 +119,7 @@ Default order when context heavy: subagent → compact (warm) → clear (cold/to
 
 `.claude/rules/*.md` files attach to file reads via glob frontmatter — full-body rule fires at the decision moment, zero ambient cost when irrelevant. Summary below so this orchestrator knows the rule exists during planning.
 
-No rules seeded yet — none of the Phase 1 signals (frontend component dir, MV3 manifest, migrations, tests) matched in this greenfield repo. Add rule files under `.claude/rules/` as path-scoped patterns emerge during development (see `.claude/rules/index.md` for the add-rule recipe).
+No rules seeded yet — no path-scoped enforcement need has surfaced for this CLI (no frontend component dir, no MV3 surface; co-located `*.test.ts` patterns already covered by `docs/techstack.md` § Coding Patterns). Add rule files under `.claude/rules/` when path-scoped patterns emerge (see `.claude/rules/index.md` for the add-rule recipe).
 
 If rule body needs more context than its summary provides during planning, read the rule file directly before designing — `Read .claude/rules/<name>.md`.
 
@@ -162,7 +164,7 @@ npm publish         # publishes to npm registry
 
 ## Planning
 
-- [`docs/overview.md`](docs/overview.md) — product context, data flow, module index. Skeleton seeded at scaffold; grown sections fill via doc-sync.
+- [`docs/overview.md`](docs/overview.md) — product context, data flow, module index, `## Roadmap` (forward feature list — single pillar for "what product will become"; read by `/super-bootstrap:todo`). Skeleton seeded at scaffold; grown sections fill via doc-sync.
 - [`docs/techstack.md`](docs/techstack.md) — stack, architecture rules, coding patterns. Skeleton seeded at scaffold; grown sections fill via doc-sync.
 - [`docs/cc-log-schema.md`](docs/cc-log-schema.md) — empirical + community-verified reference for the Claude Code session-log JSONL format. Authoritative for prose-extraction filters (line types, boolean flags, content blocks). Re-probe on suspected version drift.
 - [`docs/backlog.md`](docs/backlog.md) — deferred items (`BUG-###` / `DEBT-###` / `GAP-###`), deleted on resolve.

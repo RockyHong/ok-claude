@@ -32,6 +32,20 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
+### DEBT-002 — phantom Windows-path dirs at repo root
+
+- **Area:** repo root (`D:Gitok-claudescripts/`, `D:Gitok-claudetmp/`)
+- **Why it matters:** accidental Windows backtick-line-continuation artifacts — a `cd D:\Git\ok-claude\scripts\` or similar mis-quoted command created dirs literally named after the joined path. Not tracked by .gitignore patterns; harmless but clutters `ls` and would land in any future `git add -A`.
+- **Proposed fix:** verify both dirs are empty (or contain nothing irrecoverable), then `rmdir` (or `Remove-Item -Recurse` if non-empty after inspection). Cross-check the source command — likely PowerShell session that ran `cd D:\Git\ok-claude\scripts` with backslashes that got swallowed.
+- **Surfaced during:** super-bootstrap re-run scan (2026-05-15).
+
+### DEBT-001 — roadmap split across overview.md and backlog.md
+
+- **Area:** `docs/overview.md` § Roadmap (just scaffolded, empty) + `docs/backlog.md` § Roadmap (F1-F7 table).
+- **Why it matters:** per super-bootstrap template, forward feature list is single-pillar in `docs/overview.md` § Roadmap — `/super-bootstrap:todo` reads that section for next-pickup. Current F1-F7 table lives in `docs/backlog.md`, which is supposed to scope to BUG/DEBT/GAP only. Two-location split means todo-scanner can't find the forward list and product narrative is incomplete in overview.md.
+- **Proposed fix:** move the F1-F7 table from `docs/backlog.md` § Roadmap to `docs/overview.md` § Roadmap (one-paragraph blurb + table). Delete `## Roadmap` heading + table from backlog.md. Shipped features (F1-F3) — drop their rows, they now belong to product narrative (overview.md § Module Index already documents them). Keep F4-F7 in the new location as forward queue.
+- **Surfaced during:** super-bootstrap re-run sync (2026-05-15) — overview.md scaffolded empty Roadmap section but backlog.md kept legacy roadmap table.
+
 ### BUG-004 — `n't` clitic strip leaves `don`/`won`/`isn`/etc. fragments
 
 - **Area:** `src/denoise.ts` (CLITIC regex)
