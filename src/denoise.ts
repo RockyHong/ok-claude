@@ -62,11 +62,29 @@ const NATIVE_JIT_FRAME =
 const BUILD_WARNING =
   /^(?:WARNING:|ERROR:|FAILURE:|> (?:Task|Configure project)|BUILD FAILED)\b/;
 
+// Structured-data line: high ratio of `{}[]():,;"='|<>` to non-whitespace chars.
+// Catches JSON-shape pastes (OpenAI streaming chunks, raw API responses) that
+// don't match the explicit stack/error anchors above. Combined with the 3+
+// consecutive-line streak rule in stripNonFencedPasteBlocks, isolated dense-
+// punctuation prose lines do not trigger the strip (GAP-013).
+const STRUCT_CHARS = new Set('{}[]():,;"=\'|<>');
+const STRUCT_DENSITY_THRESHOLD = 0.22;
+const STRUCT_MIN_LINE_LEN = 20;
+
+function looksLikeStructuredLine(line: string): boolean {
+  const nws = line.replace(/\s/g, "");
+  if (nws.length < STRUCT_MIN_LINE_LEN) return false;
+  let hits = 0;
+  for (const c of nws) if (STRUCT_CHARS.has(c)) hits++;
+  return hits / nws.length >= STRUCT_DENSITY_THRESHOLD;
+}
+
 function looksLikeStackOrError(line: string): boolean {
   if (STACK_FRAME_LINE.test(line)) return true;
   if (TS_TYPE_ERROR.test(line)) return true;
   if (NATIVE_JIT_FRAME.test(line)) return true;
   if (BUILD_WARNING.test(line)) return true;
+  if (looksLikeStructuredLine(line)) return true;
   const tokens = line.split(/\s+/).filter((t) => t.length > 1);
   if (tokens.length < 3) return false;
   let hits = 0;
