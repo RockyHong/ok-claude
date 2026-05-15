@@ -247,6 +247,25 @@ describe("denoiseMarkdown", () => {
     expect(out).not.toContain("chat.completion");
     expect(out).not.toContain("chatcmpl");
   });
+
+  it("strips JSON paste even when surrounded by inline-backtick prose", () => {
+    const input = [
+      "I ran `curl` and got these chunks back",
+      '{"id":"y1","object":"chat.completion","created":200,"choices":[{"i":0}]}',
+      '{"id":"y2","object":"chat.completion","created":201,"choices":[{"i":0}]}',
+      '{"id":"y3","object":"chat.completion","created":202,"choices":[{"i":0}]}',
+      "any idea what `object` means here?",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    // `curl` and `object` (inline backticks) are stripped by INLINE_BACKTICK
+    // later in the pipeline; the 3 JSON lines are erased by paste-block.
+    expect(out).not.toContain("curl");
+    expect(out).not.toContain("chat.completion");
+    expect(out).toContain("I ran");
+    expect(out).toContain("got these chunks back");
+    expect(out).toContain("any idea what");
+    expect(out).toContain("means here");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
