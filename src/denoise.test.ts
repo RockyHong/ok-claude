@@ -321,6 +321,35 @@ describe("denoiseMarkdown", () => {
     expect(out).not.toContain("chat.completion");
     expect(out).not.toContain("system_fingerprint");
   });
+
+  it("strips a prose-diluted JSON megablob (low density, many JSON keys)", () => {
+    // Real corpus shape: JSON envelope contains a "reasoning_content" field
+    // with a long natural-prose payload. Density drops to ~0.07 because the
+    // prose dilutes structural chars. The density gate alone misses this;
+    // the JSON-key anchor (3+ "word": patterns) catches it.
+    const reasoning =
+      "This image shows a central figure surrounded by a group of people in what " +
+      "appears to be a casual gathering with mountains visible in the background. " +
+      "The atmosphere seems relaxed and conversational, with everyone holding small " +
+      "objects. The lighting suggests early evening. Several details point to this " +
+      "being a promotional still from some kind of media production.";
+    const body = '{"id":"chatcmpl-x","object":"chat.completion","created":1,' +
+      '"model":"some-model","system_fingerprint":null,"choices":[{"index":0,' +
+      '"finish_reason":"length","message":{"role":"assistant","refusal":null,' +
+      `"content":"","reasoning_content":"${reasoning}"}}],"usage":{"prompt_tokens":632,` +
+      '"completion_tokens":1000}}';
+    const input = [
+      "RuntimeError: TGW returned an empty completion",
+      `Body: ${body}`,
+      "what now?",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("RuntimeError");
+    expect(out).toContain("what now?");
+    expect(out).not.toContain("chatcmpl");
+    expect(out).not.toContain("chat.completion");
+    expect(out).not.toContain("reasoning_content");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {

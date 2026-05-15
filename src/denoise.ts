@@ -76,6 +76,12 @@ const STRUCT_MIN_LINE_LEN = 20;
 // a `Body: {...}` HTTP-error paste arrives as one 2,000+ char line. 200-char
 // floor is far above any in-prose JSON discussion (e.g. `{"ok":true}` ≈ 12 chars).
 const STRUCT_INLINE_MIN_LEN = 200;
+// JSON-key anchor: `"<word>":` pattern. A long line with 3+ such hits is a
+// JSON paste regardless of how prose-diluted its content is. Natural prose
+// never accumulates 3 JSON keys on one line; real API-response Body lines
+// contain dozens (id, object, model, choices, message, role, content, etc.).
+const JSON_KEY_PATTERN = /"\w+":/g;
+const JSON_KEY_ANCHOR_MIN = 3;
 
 function stripLongStructuredLines(text: string): string {
   const lines = text.split("\n");
@@ -83,6 +89,8 @@ function stripLongStructuredLines(text: string): string {
     .map((l) => {
       const nws = l.replace(/\s/g, "");
       if (nws.length < STRUCT_INLINE_MIN_LEN) return l;
+      const keyHits = (l.match(JSON_KEY_PATTERN) ?? []).length;
+      if (keyHits >= JSON_KEY_ANCHOR_MIN) return "";
       let hits = 0;
       for (const c of nws) if (STRUCT_CHARS.has(c)) hits++;
       return hits / nws.length >= STRUCT_DENSITY_THRESHOLD ? "" : l;
