@@ -32,20 +32,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 - **Surfaced during:** GAP-009 wrap-up wet-run review (audit showed `don` in top-100 user vocab).
 - **TDD shape:** 6+ new tests under denoise.test.ts → don't/won't/can't/isn't/wasn't/wouldn't → expected post-denoise text.
 
-### GAP-011 — Unity-native stack frame variant `(Unity) StackWalker::` not matched
-
-- **Area:** `src/denoise.ts` (MONO_JIT_FRAME regex)
-- **Why it matters:** GAP-009 D2 added `MONO_JIT_FRAME = /^0x[0-9a-fA-F]+\s+\(Mono/` to catch Unity Mono JIT native frames. But Unity also emits non-Mono native frames: `0x00007ff7ccba9e7d (Unity) StackWalker::GetCurrentCallstack`, `0x... (UnityEditor) ...`, `0x... (UnityEngine) ...`. These survive denoise and feed `unity` count.
-- **Proposed fix:** extend the regex to a list of engine-frame markers:
-
-  ```ts
-  const NATIVE_JIT_FRAME = /^0x[0-9a-fA-F]+\s+\((?:Mono|Unity|UnityEditor|UnityEngine|UnityPlayer)\b/;
-  ```
-
-  Rename `MONO_JIT_FRAME` → `NATIVE_JIT_FRAME` while at it. Could probably go further with a broader `0x[hex]+ \(\w+\)` form if real-data scan justifies — re-grep before widening.
-- **Surfaced during:** GAP-009 wrap-up grep-raw of `unity`.
-- **TDD shape:** 2-3 new fixtures under denoise.test.ts; verify `unity` count drops post-fix.
-
 ### GAP-012 — vocab contracts vs corpus-reality recalibration
 
 - **Area:** none directly — concept-level. May surface as edits to `scripts/vocab-contracts.ts` (gitignored, local) or a new lighter-weight follow-up audit.

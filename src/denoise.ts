@@ -48,8 +48,9 @@ const TS_TYPE_ERROR =
 const IDENT_DOT =
   /[a-z][a-zA-Z0-9]+\.[a-z][a-zA-Z0-9]|[A-Z][a-zA-Z0-9]+\.[A-Z][a-zA-Z0-9]/;
 const ERROR_CLASS = /[A-Z][a-zA-Z]+(Error|Exception)\b/;
-// Mono JIT native-code frame: hex address followed by "(Mono JIT Code)" or "(Mono)"
-const MONO_JIT_FRAME = /^0x[0-9a-fA-F]+\s+\(Mono/;
+// Engine-native frame: hex address + `(Mono…)` (Mono JIT Code) or Unity native modules.
+const NATIVE_JIT_FRAME =
+  /^0x[0-9a-fA-F]+\s+\((?:Mono|Unity|UnityEditor|UnityEngine|UnityPlayer)\b/;
 // Gradle / Android build tool diagnostic line
 // Requires colon after WARNING/ERROR/FAILURE to avoid matching prose like
 // "ERROR in my understanding" — real Gradle output uses "WARNING:", "ERROR:".
@@ -59,7 +60,7 @@ const BUILD_WARNING =
 function looksLikeStackOrError(line: string): boolean {
   if (STACK_FRAME_LINE.test(line)) return true;
   if (TS_TYPE_ERROR.test(line)) return true;
-  if (MONO_JIT_FRAME.test(line)) return true;
+  if (NATIVE_JIT_FRAME.test(line)) return true;
   if (BUILD_WARNING.test(line)) return true;
   const tokens = line.split(/\s+/).filter((t) => t.length > 1);
   if (tokens.length < 3) return false;

@@ -208,6 +208,37 @@ describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
     expect(out).not.toContain("UnityEditor");
   });
 
+  it("strips a Unity-native frame run (0x... (Unity) / (UnityEditor) / (UnityEngine) lines)", () => {
+    const input = [
+      "stack trace below",
+      "0x00007ff7ccba9e7d (Unity) StackWalker::GetCurrentCallstack",
+      "0x00007ff7ccba8b21 (UnityEditor) EditorApplication::Update",
+      "0x00007ff7ccba7c43 (UnityEngine) GameObject::SendMessage",
+      "what next",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("stack trace below");
+    expect(out).toContain("what next");
+    expect(out).not.toContain("StackWalker");
+    expect(out).not.toContain("EditorApplication");
+    expect(out).not.toContain("SendMessage");
+  });
+
+  it("strips a UnityPlayer-native frame run", () => {
+    const input = [
+      "player crashed",
+      "0x00007ff7cc111111 (UnityPlayer) PlayerLoop::Update",
+      "0x00007ff7cc222222 (UnityPlayer) PlayerLoop::Render",
+      "0x00007ff7cc333333 (UnityPlayer) ScriptingInvocation::Invoke",
+      "anything else",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("player crashed");
+    expect(out).toContain("anything else");
+    expect(out).not.toContain("PlayerLoop");
+    expect(out).not.toContain("ScriptingInvocation");
+  });
+
   it("strips a Gradle task-output run (> Task :... lines)", () => {
     const input = [
       "gradle build output",
