@@ -4,6 +4,9 @@ const INLINE_BACKTICK = /`[^`\n]*`/g;
 // Single-line stack frame: "at Foo.Bar (path:line[:col])". Catches frames that
 // appear inline below the 3-line paste-denoise threshold.
 const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*[/\\][^)]*:\d+(?::\d+)?\)/g;
+// Windows absolute path: drive-letter + colon + backslash + path chars.
+// High precision — drive-letter form rare in natural prose.
+const WIN_PATH = /[A-Za-z]:\\[\w\\.\-]+/g;
 // Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
 // "don’t" matches as (n)’t → keeps "don", drops "’t" — same handling as ‘s/’re/’d.
 const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;
@@ -17,6 +20,7 @@ export function denoiseMarkdown(text: string): string {
   out = stripNonFencedPasteBlocks(out);
   out = out.replace(INLINE_BACKTICK, " ");
   out = out.replace(STACK_FRAME_SINGLE, " ");
+  out = out.replace(WIN_PATH, " ");
   out = out.replace(CLITIC, "$1");
   return out;
 }

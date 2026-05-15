@@ -262,4 +262,24 @@ describe("denoiseMarkdown — GAP-010 path & stack-frame strip", () => {
     expect(out).toContain("contract");
     expect(out).toContain("signed");
   });
+
+  it("strips a Windows absolute path embedded in prose", () => {
+    const input =
+      "check D:\\Git\\ChewLingo\\apps\\backend\\src\\prompts\\wordMarker.prompts.ts for the bug";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("ChewLingo");
+    expect(out).not.toContain("wordMarker");
+    expect(out).not.toContain("prompts.ts");
+    expect(out).toContain("check");
+    expect(out).toContain("for the bug");
+  });
+
+  it("strips a lowercase-drive Windows path", () => {
+    const input = "saved at c:\\users\\rocky\\notes.md last week";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("rocky");
+    expect(out).not.toContain("notes.md");
+    expect(out).toContain("saved at");
+    expect(out).toContain("last week");
+  });
 });
