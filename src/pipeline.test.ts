@@ -156,6 +156,46 @@ describe("pipeline.run — speaker split", () => {
     expect(userWords).toContain("ideas");
   });
 
+  it("dedupes tokens per message — count = number of messages mentioning, not raw occurrences (GAP-003)", async () => {
+    const projects = join(homeDir, ".claude", "projects", "sample");
+    writeFileSync(
+      join(projects, "session.jsonl"),
+      jsonl(
+        // user message 1: repeats `foo` 5×, mentions `bar` once
+        {
+          message: { role: "user", content: "foo foo foo foo foo bar" },
+          timestamp: "2026-01-01T00:00:00Z",
+        },
+        // user message 2: mentions `foo` once, `baz` once
+        {
+          message: { role: "user", content: "foo baz" },
+          timestamp: "2026-01-01T00:00:01Z",
+        },
+        // user message 3: mentions `baz` 3×
+        {
+          message: { role: "user", content: "baz baz baz" },
+          timestamp: "2026-01-01T00:00:02Z",
+        },
+        {
+          message: { role: "assistant", content: "ok" },
+          timestamp: "2026-01-01T00:00:03Z",
+        },
+      ),
+    );
+
+    const result = await run();
+    const html = await readFile(result.outPath!, "utf8");
+    const data = extractData(html);
+    const userPairs = new Map(data.topUser);
+
+    // foo appears in msg1 + msg2 → 2
+    expect(userPairs.get("foo")).toBe(2);
+    // bar appears in msg1 only → 1
+    expect(userPairs.get("bar")).toBe(1);
+    // baz appears in msg2 + msg3 → 2 (3× in msg3 collapses to 1)
+    expect(userPairs.get("baz")).toBe(2);
+  });
+
   it("does not buffer all events in memory (regression guard for memory shape)", () => {
     const source = readFileSync(
       new URL("./pipeline.ts", import.meta.url),
