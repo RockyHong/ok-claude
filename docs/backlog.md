@@ -16,22 +16,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
-### BUG-004 — `n't` clitic strip leaves `don`/`won`/`isn`/etc. fragments
-
-- **Area:** `src/denoise.ts` (CLITIC regex)
-- **Why it matters:** current pattern `/(\p{L})['ʼ'](?:s|t|d|m|re|ve|ll)\b/giu` matches `n't` cluster as `t` only — strips apostrophe + `t`, leaves bare `n` attached to root. `don't → don`, `won't → won`, `can't → can`, `isn't → isn`, etc. In post-GAP-009 user audit: `don` count=141 rank #72 — that's fragment-noise sitting in vocab.
-- **Affected fragments observed/expected:** `don`, `won`, `can`, `isn`, `wasn`, `wouldn`, `couldn`, `shouldn`, `didn`, `doesn`, `aren`, `weren`.
-- **Proposed fix:** separate N_CLITIC pattern that strips entire `n` + apostrophe + `t` cluster, run BEFORE the general CLITIC pattern (which stops handling `t`):
-
-  ```ts
-  const N_CLITIC = /(\p{L})n['ʼ']t\b/giu;            // don't → do
-  const CLITIC   = /(\p{L})['ʼ'](?:s|d|m|re|ve|ll)\b/giu;  // we're → we (no t)
-  ```
-
-  Most outputs land in existing STOPWORDS (`do`/`is`/`was`/`would`/`could`/`should`/`did`/`does`/`are`/`were`) → drop cleanly. Two 2-char survivors need stopword adds: `wo` (won't), `ca` (can't).
-- **Surfaced during:** GAP-009 wrap-up wet-run review (audit showed `don` in top-100 user vocab).
-- **TDD shape:** 6+ new tests under denoise.test.ts → don't/won't/can't/isn't/wasn't/wouldn't → expected post-denoise text.
-
 ### GAP-012 — vocab contracts vs corpus-reality recalibration
 
 - **Area:** none directly — concept-level. May surface as edits to `scripts/vocab-contracts.ts` (gitignored, local) or a new lighter-weight follow-up audit.

@@ -4,6 +4,8 @@ const STOPWORDS = new Set([
   "be", "by", "from", "if", "so", "not", "do", "does", "did", "have", "has",
   "had", "will", "would", "can", "could", "should", "just", "like", "get",
   "got",
+  // n't-clitic survivors (BUG-004): won't → "wo", can't → "ca"
+  "wo", "ca",
 ]);
 
 const CJK_SCRIPT =

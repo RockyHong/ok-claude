@@ -67,3 +67,12 @@ describe("tokenize — short-Latin whitelist (GAP-009 D3)", () => {
     expect(tokenize("a b c d e f g h i j")).toEqual([]);
   });
 });
+
+describe("tokenize — n't-clitic survivors (BUG-004)", () => {
+  it("drops `wo` (won't survivor) as stopword", () => {
+    expect(tokenize("wo happen later")).toEqual(["happen", "later"]);
+  });
+  it("drops `ca` (can't survivor) as stopword", () => {
+    expect(tokenize("ca tell now")).toEqual(["tell", "now"]);
+  });
+});

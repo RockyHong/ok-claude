@@ -20,9 +20,13 @@ const PATH_WITH_EXT = /\b[\w.\-]+(?:[\\/][\w.\-]+)+\.[a-zA-Z]\w*\b/g;
 // Accepts date-like `2026/05/15` as known false-positive (plan §Notes).
 // Excludes natural 2-segment slash prose like `and/or`, `he/she`, `read/write`.
 const DEEP_PATH = /\b[\w.\-]{2,}[\\/][\w.\-]{2,}(?:[\\/][\w.\-]+){1,}/g;
-// Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
-// "don’t" matches as (n)’t → keeps "don", drops "’t" — same handling as ‘s/’re/’d.
-const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;
+// n't cluster: strips full `n` + apostrophe + `t` (don't → do, can't → ca).
+// Runs BEFORE CLITIC so the trailing `n` doesn't survive as a fragment.
+// Survivors `wo` (won't) / `ca` (can't) are dropped downstream via STOPWORDS.
+const N_CLITIC = /(\p{L})n['’]t\b/giu;
+// Clitic suffix: apostrophe (straight or curly) + s/d/m/re/ve/ll, preceded by a letter.
+// `t` deliberately omitted — handled by N_CLITIC above.
+const CLITIC = /(\p{L})['’](?:s|d|m|re|ve|ll)\b/giu;
 
 export function denoiseMarkdown(text: string): string {
   if (!text) return text;
@@ -37,6 +41,7 @@ export function denoiseMarkdown(text: string): string {
   out = out.replace(WIN_PATH, " ");
   out = out.replace(PATH_WITH_EXT, " ");
   out = out.replace(DEEP_PATH, " ");
+  out = out.replace(N_CLITIC, "$1");
   out = out.replace(CLITIC, "$1");
   return out;
 }

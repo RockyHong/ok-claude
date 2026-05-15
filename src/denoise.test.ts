@@ -106,8 +106,32 @@ describe("denoiseMarkdown", () => {
     expect(denoiseMarkdown("it's fine")).toBe("it fine");
   });
 
-  it("normalizes n't clitic (don't → don)", () => {
-    expect(denoiseMarkdown("don't worry")).toBe("don worry");
+  it("normalizes n't clitic — strips full n't cluster (don't → do)", () => {
+    expect(denoiseMarkdown("don't worry")).toBe("do worry");
+  });
+
+  it("normalizes n't clitic for won't (→ wo)", () => {
+    expect(denoiseMarkdown("won't happen")).toBe("wo happen");
+  });
+
+  it("normalizes n't clitic for can't (→ ca)", () => {
+    expect(denoiseMarkdown("can't tell")).toBe("ca tell");
+  });
+
+  it("normalizes n't clitic for isn't / wasn't / weren't / aren't (→ is/was/were/are)", () => {
+    expect(denoiseMarkdown("isn't wasn't weren't aren't")).toBe(
+      "is was were are",
+    );
+  });
+
+  it("normalizes n't clitic for wouldn't / couldn't / shouldn't (→ would/could/should)", () => {
+    expect(denoiseMarkdown("wouldn't couldn't shouldn't")).toBe(
+      "would could should",
+    );
+  });
+
+  it("normalizes n't clitic for didn't / doesn't (→ did/does)", () => {
+    expect(denoiseMarkdown("didn't doesn't")).toBe("did does");
   });
 
   it("normalizes 'd / 'm / 've / 'll clitics", () => {
@@ -116,7 +140,7 @@ describe("denoiseMarkdown", () => {
 
   it("normalizes curly apostrophe clitics (U+2019)", () => {
     expect(denoiseMarkdown("we’re don’t it’s")).toBe(
-      "we don it",
+      "we do it",
     );
   });
 
