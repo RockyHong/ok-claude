@@ -14,30 +14,7 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ---
 
-## Roadmap
-
-Ordered feature list. F1 shipped; rest are placeholders until promoted. When a feature begins, write its spec at `docs/superpowers/specs/{date}-{slug}.md` and plan at `docs/superpowers/plans/{date}-{slug}.md`; when it ships, delete those temporal files (per CLAUDE.md § Doc Sync).
-
-| ID | Slug                  | Title                                              | Rationale                                                                |
-| -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F1 | `mvp-wordcloud`       | Vertical slice: logs → tokens → HTML wordcloud     | Smallest end-to-end runnable. Proves stack. Shipped.                     |
-| F2 | `speaker-split`       | Split user vs Claude tabs in output HTML           | Shipped. Two-tab split (You / Claude) with per-tab empty-state.          |
-| F3 | `stream-and-progress` | Stream tokenize + terminal progress bar (no flags) | Shipped. Streaming pipeline + per-role Map fold (no whole-corpus arrays). TTY-gated stderr progress bar. Bundled BUG-001 (harness vocab filter, extended to task-notification + bash-* tags from real-data smoke) + GAP-004 (real token totals in subhead). |
-| F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
-| F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop per `docs/overview.md`.                   |
-| F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
-| F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per `docs/overview.md` — iterate post-publish.                        |
-
----
-
 ## Open
-
-### DEBT-001 — roadmap split across overview.md and backlog.md
-
-- **Area:** `docs/overview.md` § Roadmap (just scaffolded, empty) + `docs/backlog.md` § Roadmap (F1-F7 table).
-- **Why it matters:** per super-bootstrap template, forward feature list is single-pillar in `docs/overview.md` § Roadmap — `/super-bootstrap:todo` reads that section for next-pickup. Current F1-F7 table lives in `docs/backlog.md`, which is supposed to scope to BUG/DEBT/GAP only. Two-location split means todo-scanner can't find the forward list and product narrative is incomplete in overview.md.
-- **Proposed fix:** move the F1-F7 table from `docs/backlog.md` § Roadmap to `docs/overview.md` § Roadmap (one-paragraph blurb + table). Delete `## Roadmap` heading + table from backlog.md. Shipped features (F1-F3) — drop their rows, they now belong to product narrative (overview.md § Module Index already documents them). Keep F4-F7 in the new location as forward queue.
-- **Surfaced during:** super-bootstrap re-run sync (2026-05-15) — overview.md scaffolded empty Roadmap section but backlog.md kept legacy roadmap table.
 
 ### BUG-004 — `n't` clitic strip leaves `don`/`won`/`isn`/etc. fragments
 

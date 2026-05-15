@@ -43,11 +43,18 @@ Claude Code community. Anyone with a populated `~/.claude/projects/` directory w
 
 ## Current State
 
-active development — MVP (F1 `mvp-wordcloud`) shipped end-to-end; F2–F7 roadmap queued in `docs/backlog.md`.
+active development — MVP (F1–F3 shipped: `mvp-wordcloud`, `speaker-split`, `stream-and-progress`); F4–F7 queued below in § Roadmap.
 
 ## Roadmap
 
 > Forward feature list — ordered name + one-liner per feature. Single pillar for "what product will become." `/super-bootstrap:todo` reads this section: first unstarted entry (no matching spec slug under `docs/superpowers/specs/` or `docs/specs/`) surfaces as the next `Brainstorm:` row. Entries stay until the feature ships into the product narrative above; remove on ship via doc-sync.
+
+| ID | Slug                  | Title                                              | Rationale                                                                |
+| -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| F4 | `a11y-table`          | Top-N `<table>` fallback below wordcloud           | a11y commitment per `docs/techstack.md` § Key Dependencies.              |
+| F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop (see § Problem).                          |
+| F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
+| F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per § Problem — iterate post-publish.                                 |
 
 ## Module Index
 
