@@ -235,3 +235,23 @@ describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
     expect(out).toContain("FAILURE was inevitable");
   });
 });
+
+describe("denoiseMarkdown — GAP-010 path & stack-frame strip", () => {
+  it("strips a single-line stack frame embedded in prose", () => {
+    const input =
+      "we hit a render bug at View (src\\shims\\react-native-shim.js:62:10) and then crashed";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("react-native-shim");
+    expect(out).not.toContain("shims");
+    expect(out).toContain("we hit a render bug");
+    expect(out).toContain("and then crashed");
+  });
+
+  it("strips a single-line stack frame with col-less location", () => {
+    const input = "saw at Foo.bar (lib/util.ts:99) once";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("util");
+    expect(out).toContain("saw");
+    expect(out).toContain("once");
+  });
+});
