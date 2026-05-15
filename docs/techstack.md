@@ -19,7 +19,7 @@ None. CLI tool — no web framework. TypeScript for source.
 - **Embedded in output HTML** (vendored inline in the emitted file — no CDN, self-contained / offline-safe)
   - `wordcloud2.js` — canvas wordcloud renderer
   - `html-to-image` — client-side PNG export from DOM
-  - Pure CSS (vendored inline) — no Tailwind / no UI framework. Single-page output with tab toggles (user/Claude × words/sentences) via vanilla JS + `<details>`. Accessible top-N `<table>` fallback rendered below the cloud for screen readers / low-vision users.
+  - Pure CSS (vendored inline) — no Tailwind / no UI framework. Single-page output with tab toggles (user/Claude × words/sentences) via vanilla JS + `<details>`.
 - **Dev**
   - `typescript` — source language
   - `tsx` or `tsup` — dev runner / bundler (TBD)
