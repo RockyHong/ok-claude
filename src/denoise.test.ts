@@ -221,6 +221,17 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("the array");
     expect(out).toContain("we need");
   });
+
+  it("preserves a short JSON fragment below the length floor", () => {
+    const input = ["before", "[a,b]", "[c,d]", "[e,f]", "after"].join("\n");
+    const out = denoiseMarkdown(input);
+    // Each fragment < 20 non-whitespace chars — STRUCT_MIN_LINE_LEN gate keeps
+    // them out of the paste-line set. Streak never triggers.
+    expect(out).toContain("before");
+    expect(out).toContain("[a,b]");
+    expect(out).toContain("[e,f]");
+    expect(out).toContain("after");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
