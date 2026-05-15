@@ -266,6 +266,22 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("any idea what");
     expect(out).toContain("means here");
   });
+
+  it("strips a single long-and-dense structured line (GAP-013 single-line)", () => {
+    // Simulate a real corpus shape: prose line, then one mega-blob JSON line
+    // (>200 non-whitespace chars, density ≥ 0.22), then prose continues.
+    const json = '{"id":"x","object":"chat.completion","created":1,"choices":[' +
+      '{"index":0,"message":{"role":"assistant","content":"","refusal":null}},' +
+      '{"index":1,"message":{"role":"assistant","content":"","refusal":null}},' +
+      '{"index":2,"message":{"role":"assistant","content":"","refusal":null}}' +
+      ']}';
+    const input = ["RuntimeError happened", `Body: ${json}`, "anything else?"].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("RuntimeError happened");
+    expect(out).toContain("anything else?");
+    expect(out).not.toContain("chat.completion");
+    expect(out).not.toContain("refusal");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
