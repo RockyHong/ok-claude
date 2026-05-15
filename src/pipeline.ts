@@ -38,8 +38,7 @@ export async function run(): Promise<RunResult> {
 
   for await (const e of streamEvents(files, progress.tick)) {
     const map = e.role === "user" ? userMap : claudeMap;
-    const seen = new Set(tokenize(denoiseMarkdown(e.text)));
-    for (const tok of seen) {
+    for (const tok of tokenize(denoiseMarkdown(e.text))) {
       map.set(tok, (map.get(tok) ?? 0) + 1);
     }
     messages++;
