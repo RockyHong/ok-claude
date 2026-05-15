@@ -155,6 +155,21 @@ describe("denoiseMarkdown", () => {
     const out = denoiseMarkdown(" 're alone");
     expect(out).toContain("'re");
   });
+
+  it("strips a 3-line JSON-chunk paste (GAP-013)", () => {
+    const input = [
+      "lead-in prose",
+      '{"id":"chatcmpl-1776622205833662976","object":"chat.completion","created":1776622205,"choices":[{"index":0}]}',
+      '{"id":"chatcmpl-1776622205833662977","object":"chat.completion","created":1776622206,"choices":[{"index":0}]}',
+      '{"id":"chatcmpl-1776622205833662978","object":"chat.completion","created":1776622207,"choices":[{"index":0}]}',
+      "tail prose",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("chatcmpl");
+    expect(out).not.toContain("chat.completion");
+    expect(out).toContain("lead-in prose");
+    expect(out).toContain("tail prose");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
