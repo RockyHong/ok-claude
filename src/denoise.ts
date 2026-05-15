@@ -7,14 +7,19 @@ const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*[/\\][^)]*:\d+(?::\d+)?\)/
 // Windows absolute path: drive-letter + colon + backslash + path chars.
 // High precision — drive-letter form rare in natural prose.
 const WIN_PATH = /[A-Za-z]:\\[\w\\.\-]+/g;
-// URL with scheme: strip before PATH_FRAGMENT so `//host/path` chains don't
-// partially match as path.
-const URL_PATTERN = /\bhttps?:\/\/\S+/g;
-// Forward- or backslash path fragment: two segments each 2+ chars + optional
-// trailing segments. Length min excludes prose like `a/b`. Dates like
-// `2026/05/15` will match — accepted false-positive (rare, low blast).
-const PATH_FRAGMENT =
-  /\b[\w.\-]{2,}[\\/][\w.\-]{2,}(?:[\\/][\w.\-]+)*/g;
+// URL with scheme: stop at whitespace or paired-enclosure punctuation so
+// trailing `)`, `]`, `"`, `'`, `<`, `>` belonging to surrounding prose don't
+// get eaten.
+const URL_PATTERN = /\bhttps?:\/\/[^\s)\]"'<>]+/g;
+// Path with file extension: any depth, last segment ends in `.alpha+`.
+// Catches src/foo.ts, apps/backend/src/x.ts, dist\foo.js, including paths
+// with intermediate dots like `wordMarker.prompts.ts`.
+const PATH_WITH_EXT = /\b[\w.\-]+(?:[\\/][\w.\-]+)+\.[a-zA-Z]\w*\b/g;
+// Deep path: 3+ segments (2+ separators), no extension required.
+// Catches `apps/backend/src`, Unity `Library\Bee\Android\Prj`.
+// Accepts date-like `2026/05/15` as known false-positive (plan §Notes).
+// Excludes natural 2-segment slash prose like `and/or`, `he/she`, `read/write`.
+const DEEP_PATH = /\b[\w.\-]{2,}[\\/][\w.\-]{2,}(?:[\\/][\w.\-]+){1,}/g;
 // Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
 // "don’t" matches as (n)’t → keeps "don", drops "’t" — same handling as ‘s/’re/’d.
 const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;
@@ -30,7 +35,8 @@ export function denoiseMarkdown(text: string): string {
   out = out.replace(STACK_FRAME_SINGLE, " ");
   out = out.replace(URL_PATTERN, " ");
   out = out.replace(WIN_PATH, " ");
-  out = out.replace(PATH_FRAGMENT, " ");
+  out = out.replace(PATH_WITH_EXT, " ");
+  out = out.replace(DEEP_PATH, " ");
   out = out.replace(CLITIC, "$1");
   return out;
 }

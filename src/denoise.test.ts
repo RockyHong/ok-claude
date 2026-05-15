@@ -324,4 +324,28 @@ describe("denoiseMarkdown — GAP-010 path & stack-frame strip", () => {
     const out = denoiseMarkdown(input);
     expect(out).toContain("meeting went well");
   });
+
+  it("does NOT strip common English slash idioms (and/or, he/she, read/write)", () => {
+    const input = "we use and/or in specs and he/she pronouns and read/write locks";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("and/or");
+    expect(out).toContain("he/she");
+    expect(out).toContain("read/write");
+  });
+
+  it("does NOT eat closing paren when URL is in parentheses", () => {
+    const input = "(see https://github.com/foo for context)";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("github");
+    expect(out).toContain("(see");
+    expect(out).toContain("for context)");
+  });
+
+  it("still strips 2-segment path with file extension", () => {
+    const input = "edit src/foo.ts please";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("foo.ts");
+    expect(out).toContain("edit");
+    expect(out).toContain("please");
+  });
 });
