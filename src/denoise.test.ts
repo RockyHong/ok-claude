@@ -170,6 +170,21 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("lead-in prose");
     expect(out).toContain("tail prose");
   });
+
+  it("strips a 3-line short-but-dense JSON triplet (GAP-013)", () => {
+    const input = [
+      "before",
+      '{"stack":[null],"err":"timeout"}',
+      '{"stack":[null],"err":"timeout"}',
+      '{"stack":[null],"err":"timeout"}',
+      "after",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("stack");
+    expect(out).not.toContain("null");
+    expect(out).toContain("before");
+    expect(out).toContain("after");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
