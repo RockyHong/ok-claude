@@ -185,6 +185,20 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("before");
     expect(out).toContain("after");
   });
+
+  it("preserves a 2-line JSON paste (below 3+ streak threshold)", () => {
+    const input = [
+      "talking about config",
+      '{"id":"abc","object":"chat.completion","created":123}',
+      '{"id":"def","object":"chat.completion","created":456}',
+      "back to talking",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    // 2 paste-lines is below the 3+ streak rule — block stays intact
+    expect(out).toContain("chat.completion");
+    expect(out).toContain("talking about config");
+    expect(out).toContain("back to talking");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
