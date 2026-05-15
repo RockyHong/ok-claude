@@ -32,13 +32,6 @@ Ordered feature list. F1 shipped; rest are placeholders until promoted. When a f
 
 ## Open
 
-### DEBT-002 — phantom Windows-path dirs at repo root
-
-- **Area:** repo root (`D:Gitok-claudescripts/`, `D:Gitok-claudetmp/`)
-- **Why it matters:** accidental Windows backtick-line-continuation artifacts — a `cd D:\Git\ok-claude\scripts\` or similar mis-quoted command created dirs literally named after the joined path. Not tracked by .gitignore patterns; harmless but clutters `ls` and would land in any future `git add -A`.
-- **Proposed fix:** verify both dirs are empty (or contain nothing irrecoverable), then `rmdir` (or `Remove-Item -Recurse` if non-empty after inspection). Cross-check the source command — likely PowerShell session that ran `cd D:\Git\ok-claude\scripts` with backslashes that got swallowed.
-- **Surfaced during:** super-bootstrap re-run scan (2026-05-15).
-
 ### DEBT-001 — roadmap split across overview.md and backlog.md
 
 - **Area:** `docs/overview.md` § Roadmap (just scaffolded, empty) + `docs/backlog.md` § Roadmap (F1-F7 table).
