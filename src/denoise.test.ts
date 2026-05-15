@@ -208,6 +208,19 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("the array is");
     expect(out).toContain("we need");
   });
+
+  it("preserves three dense-prose lines just below the density threshold", () => {
+    // Each line ≈ density 0.21 from the calibration table — below 0.22.
+    // Three in a row still doesn't trip because the helper rejects each line.
+    const input = [
+      "the array is [a, b, c]: each is {name, age, role} and we need a, b, c.",
+      "the array is [d, e, f]: each is {name, age, role} and we need d, e, f.",
+      "the array is [g, h, i]: each is {name, age, role} and we need g, h, i.",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("the array");
+    expect(out).toContain("we need");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
