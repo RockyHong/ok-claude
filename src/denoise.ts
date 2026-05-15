@@ -3,7 +3,7 @@ const UNTERMINATED_FENCE = /```[\s\S]*$/;
 const INLINE_BACKTICK = /`[^`\n]*`/g;
 // Single-line stack frame: "at Foo.Bar (path:line[:col])". Catches frames that
 // appear inline below the 3-line paste-denoise threshold.
-const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*:\d+(?::\d+)?\)/g;
+const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*[/\\][^)]*:\d+(?::\d+)?\)/g;
 // Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
 // "don’t" matches as (n)’t → keeps "don", drops "’t" — same handling as ‘s/’re/’d.
 const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;

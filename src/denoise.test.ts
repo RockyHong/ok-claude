@@ -254,4 +254,12 @@ describe("denoiseMarkdown — GAP-010 path & stack-frame strip", () => {
     expect(out).toContain("saw");
     expect(out).toContain("once");
   });
+
+  it("does NOT strip prose of shape `at Noun (phrase: number)` without a slash", () => {
+    const input = "we met at Smith (contract: 5 pages) and signed";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("Smith");
+    expect(out).toContain("contract");
+    expect(out).toContain("signed");
+  });
 });
