@@ -7,6 +7,14 @@ const STACK_FRAME_SINGLE = /\bat\s+[\w.<>$]+\s*\([^)]*[/\\][^)]*:\d+(?::\d+)?\)/
 // Windows absolute path: drive-letter + colon + backslash + path chars.
 // High precision — drive-letter form rare in natural prose.
 const WIN_PATH = /[A-Za-z]:\\[\w\\.\-]+/g;
+// URL with scheme: strip before PATH_FRAGMENT so `//host/path` chains don't
+// partially match as path.
+const URL_PATTERN = /\bhttps?:\/\/\S+/g;
+// Forward- or backslash path fragment: two segments each 2+ chars + optional
+// trailing segments. Length min excludes prose like `a/b`. Dates like
+// `2026/05/15` will match — accepted false-positive (rare, low blast).
+const PATH_FRAGMENT =
+  /\b[\w.\-]{2,}[\\/][\w.\-]{2,}(?:[\\/][\w.\-]+)*/g;
 // Clitic suffix: apostrophe (straight or curly) + s/t/d/m/re/ve/ll, preceded by a letter.
 // "don’t" matches as (n)’t → keeps "don", drops "’t" — same handling as ‘s/’re/’d.
 const CLITIC = /(\p{L})['’](?:s|t|d|m|re|ve|ll)\b/giu;
@@ -20,7 +28,9 @@ export function denoiseMarkdown(text: string): string {
   out = stripNonFencedPasteBlocks(out);
   out = out.replace(INLINE_BACKTICK, " ");
   out = out.replace(STACK_FRAME_SINGLE, " ");
+  out = out.replace(URL_PATTERN, " ");
   out = out.replace(WIN_PATH, " ");
+  out = out.replace(PATH_FRAGMENT, " ");
   out = out.replace(CLITIC, "$1");
   return out;
 }

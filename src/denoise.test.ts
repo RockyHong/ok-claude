@@ -282,4 +282,46 @@ describe("denoiseMarkdown — GAP-010 path & stack-frame strip", () => {
     expect(out).toContain("saved at");
     expect(out).toContain("last week");
   });
+
+  it("strips a URL embedded in prose", () => {
+    const input = "see https://github.com/foo/bar for context";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("github");
+    expect(out).not.toContain("foo");
+    expect(out).not.toContain("bar");
+    expect(out).toContain("see");
+    expect(out).toContain("for context");
+  });
+
+  it("strips a forward-slash path fragment embedded in prose", () => {
+    const input = "check apps/backend/src/modules/srs/skewer.ts please";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("apps");
+    expect(out).not.toContain("backend");
+    expect(out).not.toContain("skewer");
+    expect(out).toContain("check");
+    expect(out).toContain("please");
+  });
+
+  it("strips a backslash path fragment (no drive letter)", () => {
+    const input = "saw src\\shims\\react-native-shim.js earlier";
+    const out = denoiseMarkdown(input);
+    expect(out).not.toContain("shims");
+    expect(out).not.toContain("react-native-shim");
+    expect(out).toContain("saw");
+    expect(out).toContain("earlier");
+  });
+
+  it("does NOT strip ordinary slashed prose like a/b", () => {
+    const input = "we shipped a/b testing and called it done";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("testing");
+    expect(out).toContain("done");
+  });
+
+  it("does NOT eat prose around a date like 2026/05/15", () => {
+    const input = "the 2026/05/15 meeting went well";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("meeting went well");
+  });
 });
