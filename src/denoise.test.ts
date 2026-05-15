@@ -232,6 +232,21 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("[e,f]");
     expect(out).toContain("after");
   });
+
+  it("strips only the paste streak when mixed with surrounding prose", () => {
+    const input = [
+      "question one about logs",
+      '{"id":"x1","object":"chat.completion","created":100,"choices":[{"i":0}]}',
+      '{"id":"x2","object":"chat.completion","created":101,"choices":[{"i":0}]}',
+      '{"id":"x3","object":"chat.completion","created":102,"choices":[{"i":0}]}',
+      "question two follows",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("question one about logs");
+    expect(out).toContain("question two follows");
+    expect(out).not.toContain("chat.completion");
+    expect(out).not.toContain("chatcmpl");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
