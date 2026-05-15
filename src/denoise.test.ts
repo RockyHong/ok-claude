@@ -282,6 +282,45 @@ describe("denoiseMarkdown", () => {
     expect(out).not.toContain("chat.completion");
     expect(out).not.toContain("refusal");
   });
+
+  it("preserves a short inline JSON snippet in prose", () => {
+    const input = 'the response was {"id":"abc","ok":true} apparently and we moved on';
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("the response was");
+    expect(out).toContain("apparently and we moved on");
+  });
+
+  it("preserves a long prose line without structural density", () => {
+    // 300+ chars of natural prose — should NOT be erased by single-line strip.
+    const input =
+      "this is a long sentence that just keeps going about how the weather " +
+      "was nice and how we walked to the park then talked about all the things " +
+      "that happened during the week including the meeting with the team and the " +
+      "lunch we had afterwards which was really pleasant overall and worth doing";
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("long sentence");
+    expect(out).toContain("worth doing");
+  });
+
+  it("strips a real-corpus megablob with `Body:` prefix (GAP-013 regression)", () => {
+    // Mirrors the actual paste shape found in the user's ~/.claude/projects/
+    // corpus: a single line of `Body: ` followed by a multi-kilobyte JSON object.
+    const blob = '{"id":"chatcmpl-1776622205833662976","object":"chat.completion",' +
+      '"created":1776622205,"model":"some-model-name","system_fingerprint":null,' +
+      '"choices":[{"index":0,"finish_reason":"length","message":{"role":"assistant",' +
+      '"refusal":null,"content":""}}],"usage":{"prompt_tokens":632,"completion_tokens":1000}}';
+    const input = [
+      "RuntimeError: TGW returned an empty completion",
+      `Body: ${blob}`,
+      "what should I check next?",
+    ].join("\n");
+    const out = denoiseMarkdown(input);
+    expect(out).toContain("RuntimeError");
+    expect(out).toContain("what should I check next?");
+    expect(out).not.toContain("chatcmpl");
+    expect(out).not.toContain("chat.completion");
+    expect(out).not.toContain("system_fingerprint");
+  });
 });
 
 describe("denoiseMarkdown — non-fenced paste denoise (GAP-009 D2)", () => {
