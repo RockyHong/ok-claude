@@ -19,6 +19,8 @@ function jsonl(...lines: object[]): string {
 function extractData(html: string): {
   topUser: Array<[string, number]>;
   topClaude: Array<[string, number]>;
+  openersUser: Array<{ display: string; count: number }>;
+  openersClaude: Array<{ display: string; count: number }>;
   meta: {
     sessions: number;
     messages: number;
@@ -191,6 +193,72 @@ describe("pipeline.run — speaker split", () => {
     expect(userPairs.get("foo")).toBe(6);
     expect(userPairs.get("bar")).toBe(1);
     expect(userPairs.get("baz")).toBe(4);
+  });
+
+  it("extracts top openers per role into __DATA__ (F4 opener-frequency)", async () => {
+    const projects = join(homeDir, ".claude", "projects", "sample");
+    writeFileSync(
+      join(projects, "session.jsonl"),
+      jsonl(
+        // user: WTH x2, OK x3, sorry x1
+        { message: { role: "user", content: "WTH this broke" }, timestamp: "2026-01-01T00:00:00Z" },
+        { message: { role: "user", content: "wth again" }, timestamp: "2026-01-01T00:00:01Z" },
+        { message: { role: "user", content: "OK got it" }, timestamp: "2026-01-01T00:00:02Z" },
+        { message: { role: "user", content: "ok next" }, timestamp: "2026-01-01T00:00:03Z" },
+        { message: { role: "user", content: "OK then" }, timestamp: "2026-01-01T00:00:04Z" },
+        { message: { role: "user", content: "Sorry, my bad" }, timestamp: "2026-01-01T00:00:05Z" },
+        // assistant: Looking x2, Sure x1
+        { message: { role: "assistant", content: "Looking into this" }, timestamp: "2026-01-01T00:00:06Z" },
+        { message: { role: "assistant", content: "looking deeper" }, timestamp: "2026-01-01T00:00:07Z" },
+        { message: { role: "assistant", content: "Sure!" }, timestamp: "2026-01-01T00:00:08Z" },
+      ),
+    );
+
+    const result = await run();
+    const html = await readFile(result.outPath!, "utf8");
+    const data = extractData(html);
+
+    // openersUser: ok=3 (display 'OK'), wth=2 (display 'WTH'), sorry=1 (display 'Sorry')
+    expect(data.openersUser).toEqual([
+      { display: "OK", count: 3 },
+      { display: "WTH", count: 2 },
+      { display: "Sorry", count: 1 },
+    ]);
+
+    // openersClaude: looking=2 (display 'Looking'), sure=1 (display 'Sure')
+    expect(data.openersClaude).toEqual([
+      { display: "Looking", count: 2 },
+      { display: "Sure", count: 1 },
+    ]);
+  });
+
+  it("skips opener fold for messages with no wordlike segment after denoise", async () => {
+    const projects = join(homeDir, ".claude", "projects", "sample");
+    writeFileSync(
+      join(projects, "session.jsonl"),
+      jsonl(
+        // Code-only message — denoise strips, opener should not fold.
+        {
+          message: {
+            role: "user",
+            content: "```ts\nimport { foo } from './foo.js';\n```",
+          },
+          timestamp: "2026-01-01T00:00:00Z",
+        },
+        // Real opener.
+        { message: { role: "user", content: "what now" }, timestamp: "2026-01-01T00:00:01Z" },
+        { message: { role: "assistant", content: "ok" }, timestamp: "2026-01-01T00:00:02Z" },
+      ),
+    );
+
+    const result = await run();
+    const html = await readFile(result.outPath!, "utf8");
+    const data = extractData(html);
+
+    // Only one user message produced an opener.
+    const userTotal = data.openersUser.reduce((s, e) => s + e.count, 0);
+    expect(userTotal).toBe(1);
+    expect(data.openersUser[0]?.display).toBe("what");
   });
 
   it("does not buffer all events in memory (regression guard for memory shape)", () => {

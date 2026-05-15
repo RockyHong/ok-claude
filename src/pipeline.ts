@@ -5,12 +5,14 @@ import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
 import { denoiseMarkdown } from "./denoise.js";
 import { tokenize } from "./tokenize.js";
-import { topN } from "./aggregate.js";
+import { topN, foldOpener, topNOpeners, type OpenerMap } from "./aggregate.js";
+import { firstOpener } from "./openers.js";
 import { renderHtml } from "./render.js";
 import { createProgress } from "./progress.js";
 
 const OUTPUT_FILE = "ok-claude-output.html";
 const TOP_N = 100;
+const TOP_OPENERS = 10;
 
 export type RunResult =
   | { outPath: string; reason?: undefined }
@@ -30,6 +32,8 @@ export async function run(): Promise<RunResult> {
 
   const userMap = new Map<string, number>();
   const claudeMap = new Map<string, number>();
+  const userOpeners: OpenerMap = new Map();
+  const claudeOpeners: OpenerMap = new Map();
   let messages = 0;
   let tokensIn = 0;
   let tokensOut = 0;
@@ -37,8 +41,13 @@ export async function run(): Promise<RunResult> {
   let maxTs: string | undefined;
 
   for await (const e of streamEvents(files, progress.tick)) {
+    const denoised = denoiseMarkdown(e.text);
+    const op = firstOpener(denoised);
+    if (op) {
+      foldOpener(e.role === "user" ? userOpeners : claudeOpeners, op);
+    }
     const map = e.role === "user" ? userMap : claudeMap;
-    for (const tok of tokenize(denoiseMarkdown(e.text))) {
+    for (const tok of tokenize(denoised)) {
       map.set(tok, (map.get(tok) ?? 0) + 1);
     }
     messages++;
@@ -53,10 +62,14 @@ export async function run(): Promise<RunResult> {
 
   const topUser = topN(userMap, TOP_N);
   const topClaude = topN(claudeMap, TOP_N);
+  const openersUser = topNOpeners(userOpeners, TOP_OPENERS);
+  const openersClaude = topNOpeners(claudeOpeners, TOP_OPENERS);
 
   const html = renderHtml({
     topUser,
     topClaude,
+    openersUser,
+    openersClaude,
     meta: {
       sessions: files.length,
       messages,

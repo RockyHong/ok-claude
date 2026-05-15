@@ -5,6 +5,8 @@ function input(over: Partial<RenderInput> = {}): RenderInput {
   return {
     topUser: over.topUser ?? [["foo", 3], ["bar", 1]],
     topClaude: over.topClaude ?? [["baz", 2]],
+    openersUser: over.openersUser ?? [{ display: "OK", count: 5 }],
+    openersClaude: over.openersClaude ?? [{ display: "Looking", count: 3 }],
     meta: {
       sessions: over.meta?.sessions ?? 1,
       messages: over.meta?.messages ?? 4,
@@ -116,6 +118,8 @@ function inputWithTokens(over: Partial<RenderInput["meta"]> = {}): RenderInput {
   return {
     topUser: [["foo", 3]],
     topClaude: [["bar", 2]],
+    openersUser: [],
+    openersClaude: [],
     meta: {
       sessions: 1,
       messages: 4,
@@ -146,5 +150,55 @@ describe("renderHtml — token subhead (GAP-004)", () => {
     // tokensIn/tokensOut keys leak into the inlined __DATA__ JSON; only
     // assert the rendered subhead segment (" tokens · " / "M tokens" / "K tokens") is absent.
     expect(html).not.toMatch(/ tokens/);
+  });
+});
+
+describe("renderHtml — opener side panel (F4 opener-frequency)", () => {
+  it("renders an aside container with id='openers'", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<aside[^>]*id="openers"/);
+  });
+
+  it("includes an ordered list with id='opener-list' for JS to fill", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<ol[^>]*id="opener-list"/);
+  });
+
+  it("includes openersUser and openersClaude in __DATA__ payload", () => {
+    const html = renderHtml(
+      input({
+        openersUser: [{ display: "WTH", count: 53 }],
+        openersClaude: [{ display: "Looking", count: 12 }],
+      }),
+    );
+    expect(html).toMatch(/"openersUser"\s*:\s*\[\s*\{\s*"display"\s*:\s*"WTH"\s*,\s*"count"\s*:\s*53\s*\}\s*\]/);
+    expect(html).toMatch(/"openersClaude"\s*:\s*\[\s*\{\s*"display"\s*:\s*"Looking"\s*,\s*"count"\s*:\s*12\s*\}\s*\]/);
+  });
+
+  it("emits responsive @media (max-width: 640px) rule for stacking on mobile", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/@media\s*\(\s*max-width:\s*640px\s*\)/);
+  });
+
+  it("includes a paintOpeners function in the boot script", () => {
+    const html = renderHtml(input());
+    expect(html).toContain("paintOpeners");
+  });
+
+  it("survives XSS payload in opener display via safeJson + textContent", () => {
+    const html = renderHtml(
+      input({
+        openersUser: [
+          { display: "</script><script>alert(1)</script>", count: 1 },
+        ],
+      }),
+    );
+    // safeJson must escape </script
+    expect(html).not.toMatch(/<\/script><script>alert/);
+  });
+
+  it("emits opener-list empty-state branch for both roles", () => {
+    const html = renderHtml(input({ openersUser: [], openersClaude: [] }));
+    expect(html).toContain("No openers yet.");
   });
 });
