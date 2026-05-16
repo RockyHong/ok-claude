@@ -5,6 +5,11 @@ const VENDOR_JS = readFileSync(
   "utf8",
 );
 
+const HTML_TO_IMAGE_JS = readFileSync(
+  new URL("./vendor/html-to-image.js", import.meta.url),
+  "utf8",
+);
+
 export type RenderInput = {
   topUser: Array<[string, number]>;
   topClaude: Array<[string, number]>;
@@ -186,10 +191,43 @@ export function renderHtml(input: RenderInput): string {
     font-weight: 700;
   }
   .footer .cta .chev { color: var(--amber); margin-right: 4px; }
+  .chrome {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    margin-top: 24px;
+  }
+  .actions { display: flex; gap: 28px; }
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-1);
+    background: transparent;
+    border: 1px solid var(--ink-1);
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .btn:hover { background: rgba(244, 241, 234, 0.06); }
+  .btn .chev { margin-right: 6px; color: var(--ink-1); }
+  .btn-primary .chev { color: var(--amber); }
+  .toast {
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    min-height: 1em;
+  }
+  .toast.visible { opacity: 1; }
 </style>
 </head>
 <body>
-  <div class="artifact">
+  <div id="artifact" class="artifact">
     <div class="hdr-top">
       OK. CLAUDE <span class="dash">&mdash;</span>
       <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
@@ -214,9 +252,27 @@ export function renderHtml(input: RenderInput): string {
     </div>
   </div>
 
+  <div class="chrome">
+    <div class="actions">
+      <button type="button" id="btn-download" class="btn btn-primary">
+        <span class="chev">&#9656;</span>DOWNLOAD
+      </button>
+      <button type="button" id="btn-copy" class="btn" title="copy image to clipboard">
+        <span class="chev">&#9656;</span>COPY
+      </button>
+      <button type="button" id="btn-shuffle" class="btn">
+        <span class="chev">&#9656;</span>SHUFFLE
+      </button>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+
 <script>window.__DATA__ = ${dataJson};</script>
 <script>
 ${VENDOR_JS}
+</script>
+<script>
+${HTML_TO_IMAGE_JS}
 </script>
 <script>
 (function boot() {

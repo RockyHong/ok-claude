@@ -131,7 +131,7 @@ describe("renderHtml — footer + CTA", () => {
     expect(html).toContain("no llm");
     expect(html).toContain("441 sessions");
     expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*npx ok-claude/);
-    const artifactMatch = html.match(/<div[^>]*class="artifact"[^>]*>[\s\S]*?<\/div>\s*<script/);
+    const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>[\s\S]*?<\/div>\s*<div[^>]*class="chrome"/);
     expect(artifactMatch?.[0]).toContain("footer");
     expect(artifactMatch?.[0]).toContain("cta");
   });
@@ -143,5 +143,53 @@ describe("renderHtml — empty state per side", () => {
     expect(html).toMatch(/id="canvas-user"/);
     expect(html).toMatch(/id="canvas-claude"/);
     expect(html).toMatch(/"topClaude"\s*:\s*\[\s*\]/);
+  });
+});
+
+describe("renderHtml — F5 chrome row + html-to-image", () => {
+  it('adds id="artifact" to the artifact div (PNG capture target)', () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<div[^>]*id="artifact"[^>]*class="artifact"/);
+  });
+
+  it("renders chrome block (.chrome) as a SIBLING after </div> of #artifact, not a child", () => {
+    const html = renderHtml(input());
+    // chrome must come after artifact's closing </div> and before <script>
+    expect(html).toMatch(
+      /<\/div>\s*<div[^>]*class="chrome"[\s\S]*?<\/div>\s*<script/,
+    );
+    // and it must NOT appear inside the artifact
+    const artifactInner = html.match(
+      /<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*class="chrome"/,
+    )?.[1];
+    expect(artifactInner).toBeTruthy();
+    expect(artifactInner!).not.toContain('class="chrome"');
+  });
+
+  it("renders three buttons with expected ids and chevron prefix", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<button[^>]*id="btn-download"[^>]*class="btn btn-primary"[\s\S]*?DOWNLOAD/);
+    expect(html).toMatch(/<button[^>]*id="btn-copy"[^>]*class="btn"[\s\S]*?COPY/);
+    expect(html).toMatch(/<button[^>]*id="btn-shuffle"[^>]*class="btn"[\s\S]*?SHUFFLE/);
+    // chevron prefix on each
+    const btnDownload = html.match(/<button[^>]*id="btn-download"[\s\S]*?<\/button>/)?.[0] ?? "";
+    expect(btnDownload).toContain('class="chev"');
+  });
+
+  it("renders #copy button with title tooltip", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<button[^>]*id="btn-copy"[^>]*title="copy image to clipboard"/);
+  });
+
+  it("renders empty toast slot below the action row", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<div[^>]*class="toast"[^>]*id="toast"[^>]*><\/div>/);
+  });
+
+  it("inlines html-to-image vendor (no external src)", () => {
+    const html = renderHtml(input());
+    // esbuild IIFE preamble or known internal identifier
+    expect(html).toContain("var htmlToImage");
+    expect(html).not.toMatch(/<script[^>]+src=[^>]*html-to-image/);
   });
 });
