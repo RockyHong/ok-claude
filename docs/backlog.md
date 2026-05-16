@@ -39,7 +39,7 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 **Mockup reference:** Drop happened in `mockup-f8.html`. Strip HTML/CSS/JS removed; `DATA.bodytokenUser` / `DATA.bodytokenClaude` arrays retained as restore-bait for fast A/B if vocab axis returns.
 
-**F8 spec impact:** Current F8 spec (`docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`) locks dual-axis (cloud + panel). Spec rewrite needed pre-wire to remove panel decisions (#2, #7), drop `paintOpeners → paintPanel` rename, drop `panelUser`/`panelClaude` render-input keys, drop `TOP_PANEL = 5` constant, update success criteria.
+**F8 spec impact:** Spec rewritten 2026-05-16 — `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md` now ships single-axis cloud-only artifact (decision #12 = strip dropped). Pipeline body-token tokenize/fold/topN stays live as restore-bait per this debt; render no longer consumes it.
 
 **DEBT-005 impact:** Locks table shrinks (strip-related rules vanish: status-line layout, bottom cardpos, hairline rule, lowercase-strip-case, `vocab:` prefix). Update during F8 wire.
 
@@ -59,7 +59,7 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 | --- | --- |
 | 1:1 square ratio output (universal share-platform fit per § NN#3 one-shot) | Dim-gray hierarchy — currently 3 ad-hoc values; needs systematic ladder |
 | Dual horizontal halves: left=you, right=Claude (per § NN#6 two-axis) | Uppercase usage policy — needs systematic shout/whisper rules |
-| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries; `panelUser` / `panelClaude` = top-N body-token entries | Color emphasis placement system (where white-bold vs amber-identity vs gray-scaffold) |
+| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries (body-token tokenize/fold path latent per DEBT-006 — no `panelUser` / `panelClaude` keys) | Color emphasis placement system (where white-bold vs amber-identity vs gray-scaffold) |
 | `firstOpener()` extraction contract (see F8 spec + `src/openers.ts`) | Sub-line typography distinctness (currently uppercase-tracked, may rework) |
 | § Non-Negotiable #3 one shot, one file — single self-contained HTML | Padding rhythm across header / strip / side-label / footer sections |
 | `paintXxx` functions `textContent`-set (XSS-safe) — preserve | Visual weight balance under lopsided corpus (user tiny / claude huge or reverse) |
