@@ -16,6 +16,9 @@ devDependencies:
   '@types/node':
     specifier: ^20.14.0
     version: 20.19.41
+  html-to-image:
+    specifier: 1.11.13
+    version: 1.11.13
   tsup:
     specifier: ^8.3.0
     version: 8.5.1(tsx@4.21.0)(typescript@5.9.3)
@@ -996,6 +999,10 @@ packages:
     resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
     dependencies:
       resolve-pkg-maps: 1.0.0
+    dev: true
+
+  /html-to-image@1.11.13:
+    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
     dev: true
 
   /is-docker@3.0.0:

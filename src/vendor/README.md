@@ -24,7 +24,5 @@ for JS, no network at view time — the emitted HTML is offline-safe for logic
 | --- | --- | --- | --- | --- |
 | `wordcloud2.js` | https://github.com/timdream/wordcloud2.js (npm: `wordcloud`) | 1.2.3 | MIT | Unminified — the npm package ships no min build. ~37 KB; acceptable inline size. |
 | `LICENSE-wordcloud2.txt` | npm `wordcloud@1.2.3` `LICENSE` | — | MIT | Verbatim copy. |
-
-## Future additions
-
-- `html-to-image` — vendored when F5 (in-page PNG export) lands.
+| `html-to-image.js` | https://github.com/bubkoo/html-to-image (npm: `html-to-image`) | 1.11.13 | MIT | IIFE bundle of `es/index.js` via `esbuild --bundle --format=iife --global-name=htmlToImage`. Exposes `window.htmlToImage.toBlob`. |
+| `LICENSE-html-to-image.txt` | npm `html-to-image@1.11.13` `LICENSE` | — | MIT | Verbatim copy. |

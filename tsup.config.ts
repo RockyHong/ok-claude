@@ -20,6 +20,10 @@ export default defineConfig({
       join("src", "vendor", "wordcloud2.js"),
       join("dist", "vendor", "wordcloud2.js"),
     );
+    await cp(
+      join("src", "vendor", "html-to-image.js"),
+      join("dist", "vendor", "html-to-image.js"),
+    );
     if (process.platform !== "win32") {
       await chmod(join("dist", "cli.js"), 0o755);
     }
