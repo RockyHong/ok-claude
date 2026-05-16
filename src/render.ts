@@ -422,12 +422,17 @@ ${HTML_TO_IMAGE_JS}
       return;
     }
     captureBlob().then(function (blob) {
-      if (!blob) { showToast('copy failed'); return; }
+      if (!blob) {
+        showToast('copy failed');
+        return Promise.reject('capture_failed');
+      }
       return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
     }).then(function () {
       showToast('copied to clipboard');
-    }).catch(function () {
-      showToast('copy not supported — try download instead');
+    }).catch(function (reason) {
+      if (reason !== 'capture_failed') {
+        showToast('copy not supported — try download instead');
+      }
     });
   }
 
