@@ -192,4 +192,41 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
     expect(html).toContain("var htmlToImage");
     expect(html).not.toMatch(/<script[^>]+src=[^>]*html-to-image/);
   });
+
+  it("boot script wires Fisher-Yates shuffle on closure entries (not mutating DATA)", () => {
+    const html = renderHtml(input());
+    // The handler should reshuffle local arrays then call renderAll with them.
+    expect(html).toContain("fisherYates");
+    // renderAll must take entries as args (so SHUFFLE / resize use the closure arrays)
+    expect(html).toMatch(/function\s+renderAll\s*\(\s*userEntries\s*,\s*claudeEntries\s*\)/);
+  });
+
+  it("boot script wires download / copy / shuffle handlers", () => {
+    const html = renderHtml(input());
+    expect(html).toContain("getElementById('btn-download')");
+    expect(html).toContain("getElementById('btn-copy')");
+    expect(html).toContain("getElementById('btn-shuffle')");
+    expect(html).toContain("htmlToImage.toBlob");
+    expect(html).toContain("navigator.clipboard.write");
+    expect(html).toContain("new ClipboardItem");
+  });
+
+  it("download filename pairs HTML timestamp", () => {
+    const html = renderHtml(input({
+      meta: {
+        sessions: 1, messages: 1, tokensIn: 0, tokensOut: 0,
+        dateRange: null, timestamp: "2026-05-16-1234",
+      },
+    }));
+    // boot script reads DATA.meta.timestamp for the PNG name
+    expect(html).toContain("DATA.meta.timestamp");
+    expect(html).toContain("'.png'");
+  });
+
+  it("toast helper resets text and re-arms a single fade timer", () => {
+    const html = renderHtml(input());
+    expect(html).toContain("showToast");
+    expect(html).toContain("classList.add('visible')");
+    expect(html).toContain("classList.remove('visible')");
+  });
 });

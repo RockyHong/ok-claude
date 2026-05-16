@@ -278,6 +278,11 @@ ${HTML_TO_IMAGE_JS}
 (function boot() {
   var DATA = window.__DATA__ || { topUser: [], topClaude: [], meta: {} };
 
+  // Closure-held copies — SHUFFLE mutates these, not DATA.
+  var userEntries = (DATA.topUser || []).slice();
+  var claudeEntries = (DATA.topClaude || []).slice();
+  var toastTimer = null;
+
   function setupCanvas(canvas) {
     var wrap = canvas.parentElement;
     var dpr = window.devicePixelRatio || 1;
@@ -344,9 +349,9 @@ ${HTML_TO_IMAGE_JS}
   var INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
   function upper(s) { return s.toUpperCase(); }
 
-  function renderAll() {
+  function renderAll(userEntries, claudeEntries) {
     fitHeadline();
-    drawHalf('canvas-user', DATA.topUser || [], {
+    drawHalf('canvas-user', userEntries || [], {
       side: 'user',
       fontFamily: INTER_STACK,
       fontWeight: '800',
@@ -355,7 +360,7 @@ ${HTML_TO_IMAGE_JS}
       rotateRatio: 0.35,
       caseFn: upper,
     });
-    drawHalf('canvas-claude', DATA.topClaude || [], {
+    drawHalf('canvas-claude', claudeEntries || [], {
       side: 'claude',
       fontFamily: INTER_STACK,
       fontWeight: '800',
@@ -364,6 +369,73 @@ ${HTML_TO_IMAGE_JS}
       rotateRatio: 0,
       caseFn: upper,
     });
+  }
+
+  function fisherYates(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function showToast(msg) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove('visible');
+    }, 2500);
+  }
+
+  function captureBlob() {
+    var node = document.getElementById('artifact');
+    return window.htmlToImage.toBlob(node, {
+      pixelRatio: 2,
+      backgroundColor: '#0d0d0a',
+      cacheBust: true,
+    });
+  }
+
+  function downloadPng() {
+    captureBlob().then(function (blob) {
+      if (!blob) { showToast('download failed'); return; }
+      var stamp = (DATA.meta && DATA.meta.timestamp) || 'unstamped';
+      var name = 'ok-claude-result-' + stamp + '.png';
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      showToast('saved ' + name);
+    }).catch(function () { showToast('download failed'); });
+  }
+
+  function copyPng() {
+    if (typeof ClipboardItem === 'undefined' || !navigator.clipboard || !navigator.clipboard.write) {
+      showToast('copy not supported — try download instead');
+      return;
+    }
+    captureBlob().then(function (blob) {
+      if (!blob) { showToast('copy failed'); return; }
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }).then(function () {
+      showToast('copied to clipboard');
+    }).catch(function () {
+      showToast('copy not supported — try download instead');
+    });
+  }
+
+  function shuffleLayout() {
+    userEntries = fisherYates(userEntries);
+    claudeEntries = fisherYates(claudeEntries);
+    renderAll(userEntries, claudeEntries);
+    showToast('reshuffled');
   }
 
   function whenFontsReady(cb) {
@@ -376,12 +448,24 @@ ${HTML_TO_IMAGE_JS}
 
   window.addEventListener('load', function () {
     whenFontsReady(function () {
-      requestAnimationFrame(function () { requestAnimationFrame(renderAll); });
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          renderAll(userEntries, claudeEntries);
+        });
+      });
     });
+    var dl = document.getElementById('btn-download');
+    var cp = document.getElementById('btn-copy');
+    var sf = document.getElementById('btn-shuffle');
+    if (dl) dl.addEventListener('click', downloadPng);
+    if (cp) cp.addEventListener('click', copyPng);
+    if (sf) sf.addEventListener('click', shuffleLayout);
   });
   window.addEventListener('resize', function () {
     clearTimeout(window.__rz);
-    window.__rz = setTimeout(renderAll, 120);
+    window.__rz = setTimeout(function () {
+      renderAll(userEntries, claudeEntries);
+    }, 120);
   });
 })();
 </script>
