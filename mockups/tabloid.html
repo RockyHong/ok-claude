@@ -1,0 +1,279 @@
+<!doctype html>
+<!--
+  DIRECTION: TABLOID / NEWSPRINT — newsprint cream stock, condensed black
+  grotesk (Anton + Archivo Narrow), thick rules, all-caps headline screaming
+  like a NY Post front page. Wordcloud sits like a front-page lead photo.
+  Share-loop logic: peer scrolling Twitter dark-mode sees a CREAM rectangle —
+  inverse of every other dev post in the feed = automatic stop. Tabloid
+  visual grammar is universally recognized as "screaming the embarrassing
+  truth out loud." That IS the brutal-self-roast tone of the brief. Cold
+  reader reads "OK. CLAUDE — 10.5M TOKENS BURNED" the same way they'd read
+  "HEADLESS MAN FOUND IN TOPLESS BAR" — instant tonal lock. Light canvas
+  picked deliberately: dark-mode dev social means every other post is dark,
+  so newsprint cream is the strongest scroll-stop. Dim ladder:
+  #0a0a0a / #585858 / #b3a98e. Identity: Claude amber on right column rule
+  + side-label. Numbers in red-amber for editorial-pull. Underline-everything
+  rule for sub-stats — tabloid metadata energy.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OK Claude — tabloid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@400;500;700&family=Inter:wght@700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #0d0d0a;          /* dark slab — warm-tinted */
+    --ink-1: #f4f1ea;          /* shout — warm white */
+    --ink-2: #8a857c;          /* scaffold — mid-warm-gray */
+    --ink-3: #3a3a35;          /* fade — dark-warm-gray */
+    --amber: #d97757;          /* Claude identity */
+    --rule: #f4f1ea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #050505;
+    font-family: 'Archivo Narrow', sans-serif;
+    color: var(--ink-1);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 40px;
+  }
+  .artifact {
+    width: 1080px; height: 1080px;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.025), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(255,255,255,0.03), transparent 50%),
+      var(--paper);
+    color: var(--ink-1);
+    display: flex; flex-direction: column;
+    padding: 52px 56px 44px;
+    position: relative;
+  }
+
+  /* ── HEADER ───────────────────────────────────────── */
+  .hdr-top {
+    text-align: left;
+    font-family: 'Anton', sans-serif;
+    font-size: 64px;
+    line-height: 1.0;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+    color: var(--ink-1);
+    white-space: nowrap;
+  }
+  .hdr-top .num  { color: var(--amber); }
+  .hdr-top .dash { color: var(--ink-3); margin: 0 6px; }
+  .hdr-bot {
+    margin-top: 14px;
+    text-align: right;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    text-transform: lowercase;
+    color: var(--ink-2);
+    letter-spacing: 0.01em;
+  }
+  .hdr-bot .num {
+    color: var(--ink-1);
+    font-weight: 700;
+    border-bottom: 2px solid var(--ink-1);
+    padding-bottom: 1px;
+  }
+  .hdr-rule {
+    margin-top: 24px;
+    height: 4px; background: var(--ink-1);
+    position: relative;
+  }
+  .hdr-rule::after {
+    content: ''; position: absolute; top: 7px; left: 0; right: 0;
+    height: 1px; background: var(--ink-1);
+  }
+
+  /* ── SIDE LABELS ──────────────────────────────────── */
+  .labels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    margin-top: 28px;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink-2);
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
+  }
+  .labels .l { text-align: left; }
+  .labels .r { text-align: right; color: var(--ink-1); }
+  .labels .n { color: var(--amber); font-weight: 700; }
+
+  /* ── CLOUD ────────────────────────────────────────── */
+  .halves {
+    flex: 1 1 auto;
+    margin-top: 14px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+  .divider {
+    position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 2px; background: var(--ink-1);
+  }
+  .half { position: relative; overflow: hidden; }
+  .half.user   { padding-right: 28px; }
+  .half.claude { padding-left: 28px; }
+  .cv { width: 100%; height: 100%; display: block; }
+
+  /* ── FOOTER ───────────────────────────────────────── */
+  .footer {
+    margin-top: 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--ink-1);
+    padding-top: 12px;
+  }
+  .footer .cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--ink-1);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 700;
+  }
+  .footer .cta .chev { color: var(--amber); margin-right: 4px; }
+</style>
+</head>
+<body>
+  <div class="artifact">
+    <div class="hdr-top">
+      OK. CLAUDE <span class="dash">—</span>
+      <span class="num">10.5M TOKENS</span> BURNED IN <span class="num">30 DAYS</span>.
+    </div>
+    <div class="hdr-bot">avg <span class="num">343K tokens</span>/day.</div>
+    <div class="hdr-rule"></div>
+
+    <div class="labels">
+      <div class="l">this is what you dump across <span class="n">11,629</span> messages:</div>
+      <div class="r">and this is what claude response:</div>
+    </div>
+
+    <div class="halves">
+      <div class="divider"></div>
+      <div class="half user"><canvas id="canvas-user" class="cv"></canvas></div>
+      <div class="half claude"><canvas id="canvas-claude" class="cv"></canvas></div>
+    </div>
+
+    <div class="footer">
+      <div>vol. you · ed. 30d · 441 sessions · mechanical freq · no llm</div>
+      <div class="cta"><span class="chev">▸</span>npx ok-claude</div>
+    </div>
+  </div>
+
+<script src="../src/vendor/wordcloud2.js"></script>
+<script>
+const USER = [["ok",739],["wait",141],["y",130],["what",101],["1",92],["i",75],["let",75],["no",69],["A",66],["is",55],["so",52],["why",49],["commit",37],["continue",37],["how",37],["all",35],["but",34],["now",32],["it",31],["for",29],["yes",28],["also",24],["you",24],["not",22],["sure",21],["doc",19],["can",16],["claude",16],["we",16],["any",15],["should",15],["the",15],["this",14],["merge",13],["are",11],["before",11],["drop",11],["first",11],["make",11]];
+const CLAUDE = [["Now",387],["Committed",258],["Task",250],["Done",238],["All",167],["Plan",159],["Doc",140],["Right",127],["Yes",117],["Phase",116],["No",106],["Two",98],["Good",96],["Clean",92],["Both",84],["Found",71],["Commit",70],["Got",61],["Spec",61],["To",56],["Let",54],["Update",52],["Verify",47],["Read",46],["You",44],["Add",43],["Edit",43],["I",41],["Audit",39],["Fair",38],["Need",38],["Pipeline",38],["Scope",38],["Confirmed",37],["Not",37],["Dispatching",36],["Take",35],["Three",34],["Using",34]];
+
+function setupCanvas(canvas) {
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  canvas.style.width = wrap.clientWidth + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+}
+
+function logScale(entries, fontMin, fontMax) {
+  const max = entries[0][1];
+  const min = entries[entries.length-1][1];
+  return function (count) {
+    if (max === min) return (fontMin + fontMax) / 2;
+    return fontMin + (fontMax - fontMin) * (Math.log(count) - Math.log(min)) / (Math.log(max) - Math.log(min));
+  };
+}
+
+function drawHalf(canvasId, rawEntries, opts) {
+  const canvas = document.getElementById(canvasId);
+  setupCanvas(canvas);
+  const dpr = window.devicePixelRatio || 1;
+  const entries = rawEntries.map(([w, c]) => [opts.caseFn ? opts.caseFn(w) : w, c]);
+  const cw = canvas.width, ch = canvas.height;
+  const innerEdgePx = 24 * dpr;
+  const origin = opts.side === 'user'
+    ? [cw - innerEdgePx, ch / 2]
+    : [innerEdgePx, ch / 2];
+  WordCloud(canvas, {
+    list: entries,
+    fontFamily: opts.fontFamily,
+    fontWeight: opts.fontWeight || 'normal',
+    color: opts.color,
+    backgroundColor: 'rgba(0,0,0,0)',
+    gridSize: 6,
+    weightFactor: logScale(entries, opts.fontMin * dpr, opts.fontMax * dpr),
+    rotateRatio: opts.rotateRatio,
+    minRotation: -Math.PI / 9,
+    maxRotation:  Math.PI / 9,
+    rotationSteps: 0,
+    shuffle: false,
+    shrinkToFit: true,
+    drawOutOfBound: false,
+    origin: origin,
+  });
+}
+
+function fitHeadline() {
+  const el = document.querySelector('.hdr-top');
+  if (!el) return;
+  let size = 88;
+  el.style.fontSize = size + 'px';
+  let guard = 120;
+  while (el.scrollWidth > el.clientWidth && size > 24 && guard-- > 0) {
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+function renderAll() {
+  fitHeadline();
+  drawHalf('canvas-user', USER, {
+    side: 'user',
+    fontFamily: '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontWeight: '800',
+    color: '#f4f1ea',
+    fontMin: 16, fontMax: 240,
+    rotateRatio: 0.35,
+    caseFn: s => s.toUpperCase(),
+  });
+  drawHalf('canvas-claude', CLAUDE, {
+    side: 'claude',
+    fontFamily: '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontWeight: '800',
+    color: '#d97757',
+    fontMin: 16, fontMax: 200,
+    rotateRatio: 0,
+    caseFn: s => s.toUpperCase(),
+  });
+}
+
+function whenFontsReady(cb) {
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(cb);
+  } else {
+    cb();
+  }
+}
+
+window.addEventListener('load', () => {
+  whenFontsReady(() => {
+    requestAnimationFrame(() => requestAnimationFrame(renderAll));
+  });
+});
+window.addEventListener('resize', () => {
+  clearTimeout(window.__rz);
+  window.__rz = setTimeout(renderAll, 120);
+});
+</script>
+</body>
+</html>

@@ -75,11 +75,21 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 | Side-label copy: user `This is what you dump across [N] messages:` (L-align, white@0.7) / claude `And this is what claude response:` (R-align, amber@0.85). Lowercase. Attack-then-react cadence | |
 | Header: 2-line burn-truth structure. Top: brand + burn-fact, L-aligned, auto-fits header width via JS measure-scale. Bottom: avg-velocity, R-aligned. Sentence pattern: `OK. CLAUDE — [10.3M tokens] burned in [30 days].` / `avg [343K tokens/day].` with white-bold accent on numbers, gray scaffold on verbs/connectives | |
 
-**Mockup reference:** `mockup-f8.html` (repo root, committed) — live UX playground. Structural + copy decisions locked here; aesthetic flagged to this debt.
+**Design direction locked 2026-05-16:** tabloid lane — dark mode warm slab (`#0d0d0a`), two-sub-system typography (UI tier = Anton display headline + Archivo Narrow body; Cloud tier = Inter 800 workhorse), single-line auto-fit headline (`fitHeadline()` JS shrink-to-fit), warm-ink ladder (`--ink-1 #f4f1ea` shout / `--ink-2 #8a857c` scaffold / `--ink-3 #3a3a35` fade), identity colors retained (warm-white user, amber Claude). Mockup reference: `mockups/tabloid.html`. Implementation plan: `docs/superpowers/plans/2026-05-16-debt-005-tabloid-lock.md`.
+
+**Locks added this session (promote from Tunable column above):**
+- Canonical color mode: DARK (rationale: PNG = canonical artifact; Twitter dark-mode dominant; "anti-Wrapped" anti-celebration cue)
+- Two-sub-system architecture: UI typography ≠ Cloud typography (UI may be display/expressive; Cloud MUST be workhorse legible 14→240px)
+- Dim hierarchy: explicit 3-tier warm-ink ladder above
+- Uppercase shout/whisper policy: brand wordmark + headline + cloud body = UPPERCASE; labels + footer meta = lowercase
+- Color emphasis placement: white-bold on numeric burns inside headline; amber on Claude identity (side label + cloud + CTA chevron); ink-1 (warm-white) on user identity; ink-2 scaffold for connectives/verbs; ink-3 for fade (em-dash, ed-line meta)
+- Headline width treatment: single-line `white-space: nowrap` + `fitHeadline()` auto-shrink (start 88px, floor 24px, measure `el.scrollWidth > el.clientWidth`)
+
+**Mockup reference (superseded):** `mockup-f8.html` (repo root, committed) was prior live UX playground (F8-era structure + copy lock). `mockups/tabloid.html` (this session) is the canonical visual lock. Keep mockup-f8.html until DEBT-005 ships, then delete both per § Doc Sync temporal cleanup.
 
 **npm name decision pending:** Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Current footer/docs use hyphen convention; brand wordmark uses period. Decision pending: ship `ok-claude` only (hyphen-convention) vs claim both with `ok.claude` primary + `ok-claude` shim (zero-translation viewer→install). Resolve before publish — log as separate item if not handled in F8 wire.
 
-**Update trigger:** as F8 mockup iteration locks more decisions, promote them above. Living context until DEBT-005 itself ships.
+**Update trigger:** as implementation progresses, promote remaining Tunable items to Locked. DEBT-005 entry deletes when work ships.
 
 ### DEBT-003 — opener prefix leakage (list markers, role labels, single-letter Latin)
 
