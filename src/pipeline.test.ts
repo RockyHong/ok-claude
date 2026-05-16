@@ -19,8 +19,6 @@ function jsonl(...lines: object[]): string {
 function extractData(html: string): {
   topUser: Array<[string, number]>;
   topClaude: Array<[string, number]>;
-  openersUser: Array<{ display: string; count: number }>;
-  openersClaude: Array<{ display: string; count: number }>;
   meta: {
     sessions: number;
     messages: number;
@@ -34,7 +32,7 @@ function extractData(html: string): {
   return JSON.parse(m[1]!);
 }
 
-describe("pipeline.run — speaker split", () => {
+describe("pipeline.run — first-word cloud per role (F8)", () => {
   let homeDir: string;
   let outDir: string;
   let prevHome: string | undefined;
@@ -97,7 +95,7 @@ describe("pipeline.run — speaker split", () => {
     rmSync(outDir, { recursive: true, force: true });
   });
 
-  it("partitions tokens by speaker and reports counts + token sums + date range", async () => {
+  it("partitions first-words by speaker and reports counts + token sums + date range", async () => {
     const result = await run();
     expect(result.outPath).toBeTruthy();
     const html = await readFile(result.outPath!, "utf8");
@@ -106,11 +104,14 @@ describe("pipeline.run — speaker split", () => {
     const userWords = data.topUser.map((p) => p[0]);
     const claudeWords = data.topClaude.map((p) => p[0]);
 
+    // user first-words: "hello", "ok"
     expect(userWords).toContain("hello");
-    expect(userWords).toContain("claude");
-    expect(claudeWords).not.toContain("hello");
+    expect(userWords).toContain("ok");
+    // claude first-words: "absolutely", "more"
     expect(claudeWords).toContain("absolutely");
-    expect(claudeWords).toContain("indeed");
+    expect(claudeWords).toContain("more");
+    // role-isolation
+    expect(claudeWords).not.toContain("hello");
     expect(userWords).not.toContain("absolutely");
 
     expect(data.meta.messages).toBe(4);
@@ -122,8 +123,7 @@ describe("pipeline.run — speaker split", () => {
     ]);
   });
 
-  it("denoises pasted code blocks before tokenizing (GAP-002)", async () => {
-    // Replace the seeded session with one where the user pasted a code blob.
+  it("denoises pasted code blocks before extracting first-word (GAP-002)", async () => {
     const projects = join(homeDir, ".claude", "projects", "sample");
     writeFileSync(
       join(projects, "session.jsonl"),
@@ -151,29 +151,28 @@ describe("pipeline.run — speaker split", () => {
     const data = extractData(html);
     const userWords = data.topUser.map((p) => p[0]);
 
+    expect(userWords).toContain("what");
+    // first-word axis: code-only tokens that *would* leak via body-token tokenize
+    // cannot appear because only one first-word is captured per message.
     expect(userWords).not.toContain("src");
     expect(userWords).not.toContain("import");
     expect(userWords).not.toContain("paste");
-    expect(userWords).toContain("happening");
-    expect(userWords).toContain("ideas");
   });
 
-  it("counts raw token occurrences across all messages (no per-message dedup)", async () => {
+  it("counts first-word occurrences per role across all messages", async () => {
     const projects = join(homeDir, ".claude", "projects", "sample");
     writeFileSync(
       join(projects, "session.jsonl"),
       jsonl(
-        // msg1: foo×5, bar×1
+        // user first-words: foo, foo, baz
         {
           message: { role: "user", content: "foo foo foo foo foo bar" },
           timestamp: "2026-01-01T00:00:00Z",
         },
-        // msg2: foo×1, baz×1
         {
           message: { role: "user", content: "foo baz" },
           timestamp: "2026-01-01T00:00:01Z",
         },
-        // msg3: baz×3
         {
           message: { role: "user", content: "baz baz baz" },
           timestamp: "2026-01-01T00:00:02Z",
@@ -190,24 +189,23 @@ describe("pipeline.run — speaker split", () => {
     const data = extractData(html);
     const userPairs = new Map(data.topUser);
 
-    expect(userPairs.get("foo")).toBe(6);
-    expect(userPairs.get("bar")).toBe(1);
-    expect(userPairs.get("baz")).toBe(4);
+    expect(userPairs.get("foo")).toBe(2);
+    expect(userPairs.get("baz")).toBe(1);
+    // body-token tokens beyond the first word do not leak into the first-word cloud
+    expect(userPairs.get("bar")).toBeUndefined();
   });
 
-  it("extracts top openers per role into __DATA__ (F4 opener-frequency)", async () => {
+  it("uses display-case surface for first-word entries (case-folded by key)", async () => {
     const projects = join(homeDir, ".claude", "projects", "sample");
     writeFileSync(
       join(projects, "session.jsonl"),
       jsonl(
-        // user: WTH x2, OK x3, sorry x1
         { message: { role: "user", content: "WTH this broke" }, timestamp: "2026-01-01T00:00:00Z" },
         { message: { role: "user", content: "wth again" }, timestamp: "2026-01-01T00:00:01Z" },
         { message: { role: "user", content: "OK got it" }, timestamp: "2026-01-01T00:00:02Z" },
         { message: { role: "user", content: "ok next" }, timestamp: "2026-01-01T00:00:03Z" },
         { message: { role: "user", content: "OK then" }, timestamp: "2026-01-01T00:00:04Z" },
         { message: { role: "user", content: "Sorry, my bad" }, timestamp: "2026-01-01T00:00:05Z" },
-        // assistant: Looking x2, Sure x1
         { message: { role: "assistant", content: "Looking into this" }, timestamp: "2026-01-01T00:00:06Z" },
         { message: { role: "assistant", content: "looking deeper" }, timestamp: "2026-01-01T00:00:07Z" },
         { message: { role: "assistant", content: "Sure!" }, timestamp: "2026-01-01T00:00:08Z" },
@@ -218,26 +216,22 @@ describe("pipeline.run — speaker split", () => {
     const html = await readFile(result.outPath!, "utf8");
     const data = extractData(html);
 
-    // openersUser: ok=3 (display 'OK'), wth=2 (display 'WTH'), sorry=1 (display 'Sorry')
-    expect(data.openersUser).toEqual([
-      { display: "OK", count: 3 },
-      { display: "WTH", count: 2 },
-      { display: "Sorry", count: 1 },
+    expect(data.topUser).toEqual([
+      ["OK", 3],
+      ["WTH", 2],
+      ["Sorry", 1],
     ]);
-
-    // openersClaude: looking=2 (display 'Looking'), sure=1 (display 'Sure')
-    expect(data.openersClaude).toEqual([
-      { display: "Looking", count: 2 },
-      { display: "Sure", count: 1 },
+    expect(data.topClaude).toEqual([
+      ["Looking", 2],
+      ["Sure", 1],
     ]);
   });
 
-  it("skips opener fold for messages with no wordlike segment after denoise", async () => {
+  it("skips first-word extraction for messages with no wordlike segment after denoise", async () => {
     const projects = join(homeDir, ".claude", "projects", "sample");
     writeFileSync(
       join(projects, "session.jsonl"),
       jsonl(
-        // Code-only message — denoise strips, opener should not fold.
         {
           message: {
             role: "user",
@@ -245,7 +239,6 @@ describe("pipeline.run — speaker split", () => {
           },
           timestamp: "2026-01-01T00:00:00Z",
         },
-        // Real opener.
         { message: { role: "user", content: "what now" }, timestamp: "2026-01-01T00:00:01Z" },
         { message: { role: "assistant", content: "ok" }, timestamp: "2026-01-01T00:00:02Z" },
       ),
@@ -255,10 +248,9 @@ describe("pipeline.run — speaker split", () => {
     const html = await readFile(result.outPath!, "utf8");
     const data = extractData(html);
 
-    // Only one user message produced an opener.
-    const userTotal = data.openersUser.reduce((s, e) => s + e.count, 0);
+    const userTotal = data.topUser.reduce((s, e) => s + e[1], 0);
     expect(userTotal).toBe(1);
-    expect(data.openersUser[0]?.display).toBe("what");
+    expect(data.topUser[0]?.[0]).toBe("what");
   });
 
   it("does not buffer all events in memory (regression guard for memory shape)", () => {
@@ -266,7 +258,6 @@ describe("pipeline.run — speaker split", () => {
       new URL("./pipeline.ts", import.meta.url),
       "utf8",
     );
-    // No accumulator array of LogEvents and no per-role string join allowed.
     expect(source).not.toMatch(/events:\s*LogEvent\[\]/);
     expect(source).not.toMatch(/events\.push\(/);
     expect(source).not.toMatch(/\.join\("\\n"\)/);

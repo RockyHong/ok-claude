@@ -66,9 +66,9 @@ active development — F1–F4 shipped (`mvp-wordcloud`, `speaker-split`, `strea
 | `src/discover.ts` | Recursive readdir of `~/.claude/projects/` + stat per file. Returns sorted `{path, size}[]`. ENOENT → `[]`. Skips any path containing `/subagents/` — Claude Code nests subagent dispatch transcripts at `<project>/<session-uuid>/subagents/agent-*.jsonl`; those are LLM-to-LLM prompts (not human typing) and otherwise dominate "user" vocab. |
 | `src/openers.ts` | First-word opener extractor. `firstOpener(text)` returns `{key, surface}` or null — first wordlike segment via `Intl.Segmenter` (word granularity), key = lowercase + trailing-punct-stripped, surface = original-case + trailing-punct-stripped. `TRAILING_PUNCT` covers Latin (`. , ! ? ; :`) and CJK fullwidth (`。 、 ！ ？`). Returns null when no wordlike segment after denoise (empty, whitespace, punct-only, code-only). |
 | `src/parse.ts` | JSONL → LogEvents. Exposes `parseLine(line)` (canonical primitive) and `parseJsonl(content)` (wrapper). Schema-driven prose gate via module-private `dropReason()` keyed on `docs/cc-log-schema.md` § Recommended prose-gating filter: type-whitelist (`type ∈ {user, assistant}`, drops `system` / `attachment` / `progress` / `last-prompt` / `file-history-snapshot` / `permission-mode` / `ai-title` / `queue-operation` / `custom-title` / `agent-name` / legacy `summary`) → flag gates (`isMeta`, `isSidechain`, `isApiErrorMessage`, `isCompactSummary`, `isVisibleInTranscriptOnly`) → role-whitelist. Strips harness tag bodies (`system-reminder`, `command-*`, `local-command-stdout/stderr`, `task-notification`, `bash-*`). Extracts `usage.input_tokens`/`output_tokens` when present. Tolerant: malformed lines, unknown shapes, post-strip-empty text → null. |
-| `src/pipeline.ts` | Orchestrator: discover → stream → per-event denoise → `firstOpener` fold into per-role `OpenerMap` AND tokenize-and-fold raw token occurrences into per-role frequency Maps → `topN` (100) + `topNOpeners` (10) → render → write. Accumulates messages, token sums, and min/max timestamp inline. Returns `{outPath}` or `{outPath: null, reason}`. |
+| `src/pipeline.ts` | Orchestrator: discover → stream → per-event denoise → `firstOpener` fold into per-role `OpenerMap` (drives cloud) AND tokenize-and-fold raw token occurrences into per-role frequency Maps (latent restore-bait per DEBT-006 — output unused by render) → `topNOpeners` (100) reshaped to `Array<[surface, count]>` for `topUser`/`topClaude` → render → write. Accumulates messages, token sums, and min/max timestamp inline. Returns `{outPath}` or `{outPath: null, reason}`. |
 | `src/progress.ts` | TTY-gated stderr progress bar. `createProgress(totalBytes, fileCount)` returns `{tick, done}`. No-op when stderr is piped — CI-safe. |
-| `src/render.ts` | HTML template. Inlines vendored `wordcloud2.js` and a single `<canvas>`; emits two tab buttons (You / Claude) with click-driven canvas swap. Per-tab empty-state. Subhead surfaces real token totals (K/M humanized), session + message counts, and date range. Side panel `<aside id="openers">` right of cloud inside flex `#board`, painted via `paintOpeners(tab)` (textContent — XSS-safe) on every `setActive`; stacks below cloud at viewports ≤640px via `@media (max-width: 640px)`. JSON-encodes `{topUser, topClaude, openersUser, openersClaude, meta}` into `window.__DATA__`. |
+| `src/render.ts` | HTML template. Inlines vendored `wordcloud2.js` and two `<canvas>` elements (`#canvas-user` + `#canvas-claude`) inside dual `.halves` flex container on a 1:1 `#artifact`. Brutal two-line header: `OK. CLAUDE — Xtokens burned in Ydays.` (L-aligned, auto-fit via inline `fitHeadlineWidth()` two-pass `scrollWidth` measure-scale) + `avg Ztokens/day.` (R-aligned, smaller). White-bold `.m-accent` against gray scaffold; brand wordmark `.hl-brand` lockup with period. Asymmetric side-labels above each canvas — user (L-align, white@0.7) + claude (R-align, amber@0.85). Per-side cloud config via `LOCKED` const: `rotationUser: 0.25` (chaos), `rotationClaude: 0` (order), `fontMin: 6`, `fontMax: 500`, `gapRatio: 3`, `origin: 'edge'` (inner-facing — brand pun meets centerline). `drawHalf()` per side: log curve `weightFactor`, `drawOutOfBound: false` (adaptive N), per-side `ACCENT` fill, transparent background. Install-CTA `> npx ok-claude  # confess yours` inside `#artifact` (travels with PNG). `window.resize` re-renders both halves; double-`requestAnimationFrame` first render post-`load`. JSON-encodes `{topUser, topClaude, meta}` into `window.__DATA__`. |
 | `src/stream.ts` | Side-effect tier. Reads each `.jsonl` via `readline`, yields `LogEvent`s through `parseLine`, fires `onProgress` after each file close. Per-file read errors are logged to stderr; stream continues. |
 | `src/tokenize.ts` | `Intl.Segmenter` word tokenizer. Lowercases via `toLocaleLowerCase`, keeps `isWordLike`, drops single-char Latin / pure-digit tokens (years, line numbers, sizes) **except** `y` / `n` / `k` admitted via `SHORT_LATIN_KEEP` (user interjections, GAP-009 D3), keeps single-char CJK (Han / Hiragana / Katakana / Hangul), filters a small English stopword set. |
 | `src/vendor/wordcloud2.js` | Vendored library, copied at repo time. tsup `onSuccess` mirrors `dist/vendor/wordcloud2.js` next to the built CLI so `import.meta.url` resolves in both source and bundle. |
@@ -88,15 +88,17 @@ stream.ts (readline)   ── onProgress(bytesDone, fileIdx) ─▶ progress.ts 
 denoise.ts             (strip fenced/indented/inline markdown code per event; GAP-002)
         │
         ▼
-pipeline.ts fold       userMap[token]++ / claudeMap[token]++ (raw occurrences)
+pipeline.ts fold       firstOpener(text) → foldOpener(userOpeners | claudeOpeners)  (drives cloud)
+                       tokenize(text) → userMap[token]++ / claudeMap[token]++         (latent, DEBT-006)
                        meta.messages++ ; meta.tokensIn / tokensOut += usage
                        meta.minTs / maxTs from event timestamps
         │
         ▼
-topN(userMap, 100)     topN(claudeMap, 100)
+topNOpeners(userOpeners, 100)   topNOpeners(claudeOpeners, 100)
+   → reshape to Array<[surface, count]> for topUser / topClaude
         │
         ▼
-render.ts              (inlines vendor + both topN + meta → self-contained HTML)
+render.ts              (inlines vendor + topUser/topClaude + meta → self-contained dual-canvas HTML)
         │
         ▼
 ./ok-claude-output.html   →   open(outPath)

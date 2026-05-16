@@ -5,14 +5,13 @@ import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
 import { denoiseMarkdown } from "./denoise.js";
 import { tokenize } from "./tokenize.js";
-import { topN, foldOpener, topNOpeners, type OpenerMap } from "./aggregate.js";
+import { foldOpener, topNOpeners, type OpenerMap } from "./aggregate.js";
 import { firstOpener } from "./openers.js";
 import { renderHtml } from "./render.js";
 import { createProgress } from "./progress.js";
 
 const OUTPUT_FILE = "ok-claude-output.html";
 const TOP_N = 100;
-const TOP_OPENERS = 10;
 
 export type RunResult =
   | { outPath: string; reason?: undefined }
@@ -30,6 +29,8 @@ export async function run(): Promise<RunResult> {
   const totalBytes = files.reduce((s, f) => s + f.size, 0);
   const progress = createProgress(totalBytes, files.length);
 
+  // Body-token folds stay live per DEBT-006 (restore-bait for vocab-axis revival).
+  // Output unused by F8 render; first-word folds drive both clouds.
   const userMap = new Map<string, number>();
   const claudeMap = new Map<string, number>();
   const userOpeners: OpenerMap = new Map();
@@ -60,16 +61,17 @@ export async function run(): Promise<RunResult> {
   }
   progress.done();
 
-  const topUser = topN(userMap, TOP_N);
-  const topClaude = topN(claudeMap, TOP_N);
-  const openersUser = topNOpeners(userOpeners, TOP_OPENERS);
-  const openersClaude = topNOpeners(claudeOpeners, TOP_OPENERS);
+  const topUser: Array<[string, number]> = topNOpeners(userOpeners, TOP_N).map(
+    (e) => [e.display, e.count],
+  );
+  const topClaude: Array<[string, number]> = topNOpeners(
+    claudeOpeners,
+    TOP_N,
+  ).map((e) => [e.display, e.count]);
 
   const html = renderHtml({
     topUser,
     topClaude,
-    openersUser,
-    openersClaude,
     meta: {
       sessions: files.length,
       messages,

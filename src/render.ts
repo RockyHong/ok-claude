@@ -5,13 +5,9 @@ const VENDOR_JS = readFileSync(
   "utf8",
 );
 
-export type OpenerEntry = { display: string; count: number };
-
 export type RenderInput = {
   topUser: Array<[string, number]>;
   topClaude: Array<[string, number]>;
-  openersUser: OpenerEntry[];
-  openersClaude: OpenerEntry[];
   meta: {
     sessions: number;
     messages: number;
@@ -25,33 +21,42 @@ function safeJson(value: unknown): string {
   return JSON.stringify(value).replace(/<\/(script)/gi, "<\\/$1");
 }
 
-function formatTokens(total: number): string {
-  if (total >= 1_000_000) return `${(total / 1_000_000).toFixed(1)}M`;
-  if (total >= 1_000) return `${(total / 1_000).toFixed(1)}K`;
-  return String(total);
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function formatSubhead(meta: RenderInput["meta"]): string {
-  const range = meta.dateRange
-    ? ` · ${meta.dateRange[0]} → ${meta.dateRange[1]}`
-    : "";
-  const sNoun = meta.sessions === 1 ? "session" : "sessions";
-  const mNoun = meta.messages === 1 ? "message" : "messages";
-  const totalTokens = meta.tokensIn + meta.tokensOut;
-  const tokens =
-    totalTokens > 0 ? `${formatTokens(totalTokens)} tokens · ` : "";
-  return `${tokens}${meta.sessions} ${sNoun} · ${meta.messages} ${mNoun}${range}`;
+function fmtTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function computeDays(range: [string, string] | null): number {
+  if (!range) return 30;
+  const start = new Date(range[0]).getTime();
+  const end = new Date(range[1]).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 30;
+  return Math.max(1, Math.round((end - start) / 86_400_000));
 }
 
 export function renderHtml(input: RenderInput): string {
   const dataJson = safeJson({
     topUser: input.topUser,
     topClaude: input.topClaude,
-    openersUser: input.openersUser,
-    openersClaude: input.openersClaude,
     meta: input.meta,
   });
-  const subhead = formatSubhead(input.meta);
+
+  const burned = input.meta.tokensOut;
+  const days = computeDays(input.meta.dateRange);
+  const perDay = Math.round(burned / days);
+  const burnedTxt = escapeHtml(`${fmtTokens(burned)} tokens`);
+  const daysTxt = escapeHtml(`${days} days`);
+  const perDayTxt = escapeHtml(`${fmtTokens(perDay)} tokens/day`);
+  const msgCountTxt = escapeHtml(fmtTokens(input.meta.messages));
 
   return `<!doctype html>
 <html lang="en">
@@ -60,51 +65,81 @@ export function renderHtml(input: RenderInput): string {
 <title>OK Claude</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #0b0d10; color: #e7eaee; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-  header { padding: 1.5rem 2rem 0.5rem; }
-  header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
-  header p { margin: 0.25rem 0 0; color: #8a939b; font-size: 0.95rem; }
-  main { padding: 1rem 2rem 2rem; }
-  #tabs { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-  #tabs button { appearance: none; background: #11141a; color: #8a939b; border: 1px solid #1d2330; border-radius: 8px; padding: 0.45rem 1rem; font: inherit; cursor: pointer; transition: background 120ms, color 120ms, border-color 120ms; }
-  #tabs button:hover { color: #e7eaee; }
-  #tabs button.active { background: #1d2330; color: #e7eaee; border-color: #2a3242; }
-  #board { display: flex; gap: 1rem; align-items: stretch; }
-  #cloud-wrap { flex: 1 1 auto; aspect-ratio: 16 / 10; max-height: calc(100vh - 12rem); background: #11141a; border-radius: 12px; overflow: hidden; position: relative; }
-  #cloud { width: 100%; height: 100%; display: block; }
-  #openers { flex: 0 0 200px; background: #11141a; border-radius: 12px; padding: 0.75rem 1rem; overflow: hidden; }
-  #openers h2 { margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 600; color: #8a939b; text-transform: uppercase; letter-spacing: 0.05em; }
-  #opener-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-  #opener-list li { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.95rem; color: #e7eaee; }
-  #opener-list .count { color: #5b6168; font-variant-numeric: tabular-nums; }
-  #opener-list .empty { color: #5b6168; font-style: italic; }
-  footer { padding: 0 2rem 1.5rem; color: #5b6168; font-size: 0.8rem; }
-  footer a { color: inherit; }
-  @media (max-width: 640px) {
-    #board { flex-direction: column; }
-    #openers { flex: 0 0 auto; }
+  html, body { margin: 0; padding: 0; background: #1a1d22; color: #e7eaee; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #stage { display: flex; justify-content: center; align-items: flex-start; padding: 32px 16px; min-height: 100vh; }
+  #artifact {
+    position: relative;
+    background: #0b0d10;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px #2a3242;
+    display: flex;
+    flex-direction: column;
+    width: min(820px, 90vw);
+    aspect-ratio: 1 / 1;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
+  #artifact header { flex-shrink: 0; z-index: 2; padding: 18px 22px 14px; border-bottom: 3px solid #2a3242; }
+  #artifact .hl-top {
+    display: inline-block;
+    font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.01em; line-height: 1.1;
+    color: #7a838c;
+    white-space: nowrap;
+  }
+  #artifact .hl-bot {
+    font-size: 0.95rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; line-height: 1.25;
+    color: #7a838c; text-align: right;
+    margin-top: 8px;
+  }
+  #artifact .hl-brand { color: #ffffff; font-weight: 900; }
+  #artifact .hl-sep { color: #5b6168; margin: 0 10px; }
+  #artifact .m-accent { color: #ffffff; font-weight: 900; }
+
+  .halves { flex: 1 1 auto; display: flex; flex-direction: row; min-height: 0; min-width: 0; }
+  .half { flex: 1 1 0; min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+  .canvas-wrap { flex: 1 1 auto; min-height: 0; min-width: 0; position: relative; }
+  .canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+
+  .side-label { flex-shrink: 0; padding: 10px 18px 6px; font-size: 0.85rem; font-weight: 500; }
+  .half.user .side-label { text-align: left; color: #ffffff; opacity: 0.7; }
+  .half.claude .side-label { text-align: right; color: #d97757; opacity: 0.85; }
+
+  .install-cta {
+    flex-shrink: 0;
+    padding: 10px 18px 12px;
+    text-align: right;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: #5b6168;
+    letter-spacing: 0.02em;
+    border-top: 1px solid #1d2330;
+  }
+  .install-cta .cta-cmd { color: #d97757; font-weight: 700; }
+  .install-cta .cta-comment { color: #5b6168; font-style: italic; opacity: 0.8; }
 </style>
 </head>
 <body>
-<header>
-  <h1>OK Claude</h1>
-  <p>${subhead}</p>
-</header>
-<main>
-  <div id="tabs">
-    <button type="button" data-tab="user" class="active">You</button>
-    <button type="button" data-tab="claude">Claude</button>
+<div id="stage">
+  <div id="artifact">
+    <header id="header">
+      <div class="hl-top"><span class="hl-brand">OK. CLAUDE</span><span class="hl-sep">—</span><span class="m-accent">${burnedTxt}</span> burned in <span class="m-accent">${daysTxt}</span>.</div>
+      <div class="hl-bot">avg <span class="m-accent">${perDayTxt}</span>.</div>
+    </header>
+    <div class="halves">
+      <section class="half user">
+        <div class="side-label">This is what you dump across <span class="msg-count">${msgCountTxt}</span> messages:</div>
+        <div class="canvas-wrap"><canvas id="canvas-user"></canvas></div>
+      </section>
+      <section class="half claude">
+        <div class="side-label">And this is what claude response:</div>
+        <div class="canvas-wrap"><canvas id="canvas-claude"></canvas></div>
+      </section>
+    </div>
+    <div class="install-cta">&gt; <span class="cta-cmd">npx ok-claude</span>  <span class="cta-comment"># confess yours</span></div>
   </div>
-  <div id="board">
-    <div id="cloud-wrap"><canvas id="cloud"></canvas></div>
-    <aside id="openers">
-      <h2>Openers</h2>
-      <ol id="opener-list"></ol>
-    </aside>
-  </div>
-</main>
-<footer>generated by <code>npx ok-claude</code> · mechanical word frequency · all rendering offline</footer>
+</div>
 
 <script>window.__DATA__ = ${dataJson};</script>
 <script>
@@ -112,101 +147,129 @@ ${VENDOR_JS}
 </script>
 <script>
 (function boot() {
-  var data = window.__DATA__ || { topUser: [], topClaude: [], openersUser: [], openersClaude: [], meta: {} };
-  var lists = { user: data.topUser || [], claude: data.topClaude || [] };
-  var openers = { user: data.openersUser || [], claude: data.openersClaude || [] };
-  var canvas = document.getElementById('cloud');
-  var wrap = document.getElementById('cloud-wrap');
-  var active = 'user';
+  var DATA = window.__DATA__ || { topUser: [], topClaude: [], meta: {} };
+  var ACCENT = { user: '255, 255, 255', claude: '217, 119, 87' };
+  var LOCKED = {
+    origin: 'edge',
+    curve: 'log',
+    rotationUser: 0.25,
+    rotationClaude: 0,
+    fontMin: 6,
+    fontMax: 500,
+    gapRatio: 3,
+  };
 
-  function resize() {
+  var header = document.getElementById('header');
+  var canvasUser = document.getElementById('canvas-user');
+  var canvasClaude = document.getElementById('canvas-claude');
+
+  function fitHeadlineWidth() {
+    var el = header.querySelector('.hl-top');
+    if (!el) return;
+    var cs = getComputedStyle(header);
+    var padL = parseFloat(cs.paddingLeft) || 0;
+    var padR = parseFloat(cs.paddingRight) || 0;
+    var avail = header.clientWidth - padL - padR;
+    if (avail <= 0) return;
+    el.style.fontSize = '16px';
+    var natural = el.scrollWidth;
+    if (natural <= 0) return;
+    var target = 16 * (avail / natural);
+    el.style.fontSize = target + 'px';
+    natural = el.scrollWidth;
+    if (natural > 0) {
+      target = target * (avail / natural);
+      el.style.fontSize = target + 'px';
+    }
+  }
+
+  function sizeCanvas(canvas) {
+    var wrap = canvas.parentElement;
     var dpr = window.devicePixelRatio || 1;
-    canvas.width = wrap.clientWidth * dpr;
-    canvas.height = wrap.clientHeight * dpr;
-    canvas.style.width = wrap.clientWidth + 'px';
-    canvas.style.height = wrap.clientHeight + 'px';
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width = Math.max(1, Math.round(w * dpr));
+    canvas.height = Math.max(1, Math.round(h * dpr));
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    return { w: w, h: h, dpr: dpr };
   }
 
-  function showEmpty(tab) {
-    var msg = tab === 'user' ? 'No words from You yet.' : 'No words from Claude yet.';
-    wrap.innerHTML = '<p style="padding:2rem;color:#8a939b">' + msg + '</p>';
-  }
-
-  function restoreCanvas() {
-    if (!document.getElementById('cloud')) {
-      wrap.innerHTML = '<canvas id="cloud"></canvas>';
-      canvas = document.getElementById('cloud');
+  function originPoint(canvas, side, mode) {
+    var W = canvas.width, H = canvas.height;
+    if (mode === 'edge') {
+      if (side === 'user') return [W * 0.92, H / 2];
+      if (side === 'claude') return [W * 0.08, H / 2];
     }
+    return [W / 2, H / 2];
   }
 
-  function draw(tab) {
-    var list = lists[tab];
-    if (!list.length) {
-      showEmpty(tab);
-      return;
+  function drawHalf(canvas, words, side, opts) {
+    var sized = sizeCanvas(canvas);
+    var dpr = sized.dpr;
+    if (!words || words.length === 0) return;
+    var max = words[0][1];
+    var fontMin = opts.fontMin * dpr;
+    var fontMax = opts.fontMax * dpr;
+    var list = words.map(function (pair) { return [pair[0], pair[1]]; });
+    var fillColor = 'rgb(' + ACCENT[side] + ')';
+    var origin = originPoint(canvas, side, opts.origin);
+    var curve = opts.curve;
+    function shape(r) {
+      if (curve === 'log') return Math.log1p(r * (Math.E - 1));
+      return r;
     }
-    restoreCanvas();
-    resize();
-    var max = list[0][1];
-    var weighted = list.map(function (pair) {
-      var ratio = pair[1] / max;
-      var size = 12 + Math.round(ratio * 80);
-      return [pair[0], size];
-    });
     WordCloud(canvas, {
-      list: weighted,
-      gridSize: 8,
-      rotateRatio: 0.25,
-      rotationSteps: 2,
-      backgroundColor: '#11141a',
-      color: 'random-light',
+      list: list,
+      gridSize: opts.gridSize,
+      weightFactor: function (weight) {
+        var ratio = weight / max;
+        return fontMin + shape(ratio) * (fontMax - fontMin);
+      },
       fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      fontWeight: '800',
+      color: fillColor,
+      backgroundColor: 'transparent',
+      rotateRatio: opts.rotation,
+      rotationSteps: 2,
+      minRotation: -Math.PI / 8,
+      maxRotation: Math.PI / 8,
       shrinkToFit: true,
       drawOutOfBound: false,
+      origin: origin,
+      shuffle: false,
     });
   }
 
-  function paintOpeners(tab) {
-    var list = openers[tab];
-    var ol = document.getElementById('opener-list');
-    if (!ol) return;
-    if (!list.length) {
-      ol.innerHTML = '<li class="empty">No openers yet.</li>';
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < list.length; i++) {
-      html += '<li><span class="word"></span><span class="count"></span></li>';
-    }
-    ol.innerHTML = html;
-    var lis = ol.querySelectorAll('li');
-    for (var j = 0; j < list.length; j++) {
-      lis[j].querySelector('.word').textContent = list[j].display;
-      lis[j].querySelector('.count').textContent = list[j].count;
-    }
+  var renderToken = 0;
+  function applyAll() {
+    var gridSize = Math.max(2, Math.round(LOCKED.fontMin * LOCKED.gapRatio));
+    var baseOpts = {
+      gridSize: gridSize,
+      origin: LOCKED.origin,
+      fontMin: LOCKED.fontMin,
+      fontMax: LOCKED.fontMax,
+      curve: LOCKED.curve,
+    };
+    var myToken = ++renderToken;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (myToken !== renderToken) return;
+        drawHalf(canvasUser, DATA.topUser || [], 'user', Object.assign({}, baseOpts, { rotation: LOCKED.rotationUser }));
+        drawHalf(canvasClaude, DATA.topClaude || [], 'claude', Object.assign({}, baseOpts, { rotation: LOCKED.rotationClaude }));
+      });
+    });
   }
 
-  function setActive(tab) {
-    active = tab;
-    var buttons = document.querySelectorAll('#tabs button');
-    for (var i = 0; i < buttons.length; i++) {
-      var btn = buttons[i];
-      if (btn.getAttribute('data-tab') === tab) btn.classList.add('active');
-      else btn.classList.remove('active');
-    }
-    draw(tab);
-    paintOpeners(tab);
-  }
-
-  document.getElementById('tabs').addEventListener('click', function (ev) {
-    var t = ev.target;
-    if (!t || t.tagName !== 'BUTTON') return;
-    var tab = t.getAttribute('data-tab');
-    if (!tab || tab === active || !lists[tab]) return;
-    setActive(tab);
+  window.addEventListener('resize', function () {
+    applyAll();
+    fitHeadlineWidth();
   });
 
-  setActive('user');
+  fitHeadlineWidth();
+  window.addEventListener('load', function () {
+    fitHeadlineWidth();
+    requestAnimationFrame(function () { requestAnimationFrame(applyAll); });
+  });
 })();
 </script>
 </body>
