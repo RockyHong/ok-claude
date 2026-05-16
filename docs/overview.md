@@ -19,9 +19,9 @@ external-tools: [github]
 
 ## Problem
 
-Fun hobby CLI tool. Scans local Claude Code session logs at `~/.claude/projects/**/*.jsonl` and produces a mechanical (non-LLM) word/sentence frequency wordcloud. Output is a self-contained HTML page that auto-opens in the browser; user clicks an in-page "Export PNG" button to rasterize and share on social media — old-school Facebook trivia app energy, applied to "what did me + Claude actually spend this week on."
+Fun hobby CLI tool. Scans local Claude Code session logs at `~/.claude/projects/**/*.jsonl` and produces a mechanical (non-LLM) word/sentence frequency wordcloud. Output is a self-contained HTML page that auto-opens in the browser; user clicks an in-page "Export PNG" button to rasterize and share on social media — old-school Facebook trivia app energy. The artifact is a ~30s glance for the pun and the laugh, not a reflection / rewind tool (it may *feel* like rewind on first look — that's the hook, not the function).
 
-v1 surfaces most-used words split by speaker (user vs Claude). v2 extends to most-said sentences. Tokenization must handle both Latin (whitespace) and CJK (character segmentation) input cleanly. Layout (combined vs split tabs/images) decided post-bootstrap.
+v1 surfaces most-frequent first-words split by speaker (user vs Claude) — the brand pun (`OK Claude`) lands as the giant center word; opener tics form the halo around it (per F8 pivot, see § Roadmap). A side panel carries top-5 body-token words + counts as the secondary vocab axis. v2 extends to most-said sentences via mechanical clustering (no LLM). Tokenization must handle both Latin (whitespace) and CJK (character segmentation) input cleanly. Layout (combined vs split tabs/images) decided post-bootstrap.
 
 ## Non-Negotiables
 
@@ -43,7 +43,7 @@ Claude Code community. Anyone with a populated `~/.claude/projects/` directory w
 
 ## Current State
 
-active development — MVP (F1–F3 shipped: `mvp-wordcloud`, `speaker-split`, `stream-and-progress`); F4–F7 queued below in § Roadmap.
+active development — F1–F4 shipped (`mvp-wordcloud`, `speaker-split`, `stream-and-progress`, `opener-frequency`); F5–F8 queued below in § Roadmap. F8 (`mood-cloud-pivot`) specced — `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`.
 
 ## Roadmap
 
@@ -51,7 +51,7 @@ active development — MVP (F1–F3 shipped: `mvp-wordcloud`, `speaker-split`, `
 
 | ID | Slug                  | Title                                              | Rationale                                                                |
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F8 | `mood-cloud-pivot`    | Swap wordcloud data source from body-token frequency to first-word frequency; retire F4 side panel (single-axis cloud). | First-principle trim against § Name + § Non-Negotiable #7. A/B against real corpus (441 sessions, 11.6k msgs): body-token cloud is balanced (top1/top10 ≈ 2.3×, looks like generic dev cloud — `need`/`repo`/`skill`/`user`/`run`); first-word cloud is power-law (top1/top10 ≈ 13.4×, `ok`=739 dominates a halo of `wait`/`what`/`let`/`no`/`so`/`why`). First-word version self-references the brand (`OK Claude` pun shows up as the giant center word) and trades niche topic-words for universal opener tics — meme + share-fuel both win. Scope: swap pipeline cloud source, delete `<aside id="openers">` + responsive CSS + `paintOpeners` + opener data keys in `__DATA__` (F4 UI retires), investigate template-prefix leakage spotted in A/B sample (`Request:43`, `1:92`, `A:66` likely numbered-list / role-prefix artifacts — may need `firstOpener` filter or denoise tweak). |
+| F8 | `mood-cloud-pivot`    | Swap cloud source body-token → first-word; swap panel source openers → top-5 body-token words+counts (dual-axis preserved, brand pun lands in cloud). | A/B against real corpus (441 sessions, 11.6k msgs): first-word cloud is power-law (`ok`=739 dominant, halo of `wait`/`what`/`let`/`no`/`so`/`why`) — meme-punch + brand pun visible in screenshot. Body-token vocab axis preserved in panel as caption strip. Per-glance reframe of § Problem (not reflection — pun). Spec: `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`. |
 | F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop (see § Problem).                          |
 | F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
 | F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per § Problem — iterate post-publish.                                 |
