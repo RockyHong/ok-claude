@@ -43,7 +43,7 @@ Claude Code community. Anyone with a populated `~/.claude/projects/` directory w
 
 ## Current State
 
-active development — F1–F4 shipped (`mvp-wordcloud`, `speaker-split`, `stream-and-progress`, `opener-frequency`); F5–F8 queued below in § Roadmap. F8 (`mood-cloud-pivot`) specced — `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`.
+active development — F1–F4 + F8 shipped (`mvp-wordcloud`, `speaker-split`, `stream-and-progress`, `opener-frequency`, `mood-cloud-pivot`); F5–F7 queued below in § Roadmap. Post-F8 visual polish flagged as DEBT-005 (separate design pass).
 
 ## Roadmap
 
@@ -51,7 +51,6 @@ active development — F1–F4 shipped (`mvp-wordcloud`, `speaker-split`, `strea
 
 | ID | Slug                  | Title                                              | Rationale                                                                |
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F8 | `mood-cloud-pivot`    | Swap cloud source body-token → first-word; ship single-axis dual-canvas brutalist 1:1 artifact (user/Claude halves, asymmetric rotation pun, brutal burn-headline, install-CTA footer). Panel dropped — body-token path stays latent (see DEBT-006). | A/B against real corpus (441 sessions, 11.6k msgs): first-word cloud is power-law (`ok`=739 dominant, halo of `wait`/`what`/`let`/`no`/`so`/`why`) — meme-punch + brand pun visible in screenshot. Per-glance reframe of § Problem (not reflection — pun). Spec: `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`. |
 | F5 | `png-export`          | Wire `html-to-image` to in-page Export button      | Social-share = core value prop (see § Problem).                          |
 | F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
 | F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud (v2)        | v2 per § Problem — iterate post-publish.                                 |

@@ -45,7 +45,7 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ### DEBT-005 — visual UI systematic pass + remake context
 
-**Area:** `src/render.ts` visual layer (F8 mockup-locked structure: dual canvas wordcloud, fixed 1:1 share image, brutal headline header, status-line strip, footer install-CTA, white/amber identity pair). Companion to DEBT-004 (text/wording) — much of DEBT-004 scope folded into F8 mockup copy-locks; residual = "verify mockup copy migrates 1:1 to src/render.ts post-F8 wire."
+**Area:** `src/render.ts` visual layer (F8-shipped structure: dual canvas wordcloud, fixed 1:1 share image, brutal headline header, asymmetric side-labels, install-CTA footer, white/amber identity pair). Copy already locked (mockup migrated 1:1 in F8 wire); this debt is aesthetic-polish only.
 
 **Symptom:** F8 mockup iteration locked structural UX + copy (see Locked table). Visual polish flagged for systematic design-pass. Specifically: dim-hierarchy not unified across header / strip / labels (ad-hoc gray values `#5b6168` / `#7a838c` / `#8a939b`). Uppercase usage inconsistent — wordmark + headline uppercase, strip + labels lowercase, no systematic rule for shout-vs-whisper. Color emphasis placement ad-hoc (white-bold for numbers, amber for identity, gray for scaffold; no rule for where each applies). Padding rhythms set per-section without consistency pass. Edge-case visual breakage uncharted: lopsided user/claude corpus, single-letter openers (`i` / `A`) inflating cloud, very-few-openers underfilling halves.
 
@@ -71,9 +71,8 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 | Burn-display: output-tokens-only ("burn-brag" cultural trend) — drop input-token display | |
 | Cloud render: no alpha (font size carries weight signal); font range 6→500px; gap = 3× fontMin; adaptive N via wordcloud2 `drawOutOfBound: false` | |
 | Rotation: user=25% chaos, claude=0% order (asymmetric pun) | |
-| Strip: status-line layout (inline pairs flex-wrap, lowercase, count adjacent to word, hairline rule above, full-width, bottom of artifact) | |
 | Side-label flow position: own row above canvas (NOT absolute overlay), mirror align (user-left / claude-right) | |
-| Self-explanatory copy: cloud labels `how you start.` / `how Claude starts.`; strip prefix `your common words:` / `Claude's common words:` | |
+| Side-label copy: user `This is what you dump across [N] messages:` (L-align, white@0.7) / claude `And this is what claude response:` (R-align, amber@0.85). Lowercase. Attack-then-react cadence | |
 | Header: 2-line burn-truth structure. Top: brand + burn-fact, L-aligned, auto-fits header width via JS measure-scale. Bottom: avg-velocity, R-aligned. Sentence pattern: `OK. CLAUDE — [10.3M tokens] burned in [30 days].` / `avg [343K tokens/day].` with white-bold accent on numbers, gray scaffold on verbs/connectives | |
 
 **Mockup reference:** `mockup-f8.html` (repo root, committed) — live UX playground. Structural + copy decisions locked here; aesthetic flagged to this debt.
@@ -81,16 +80,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 **npm name decision pending:** Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Current footer/docs use hyphen convention; brand wordmark uses period. Decision pending: ship `ok-claude` only (hyphen-convention) vs claim both with `ok.claude` primary + `ok-claude` shim (zero-translation viewer→install). Resolve before publish — log as separate item if not handled in F8 wire.
 
 **Update trigger:** as F8 mockup iteration locks more decisions, promote them above. Living context until DEBT-005 itself ships.
-
-### DEBT-004 — UI wording surface review (full pass, not per-feature)
-
-**Area:** `src/render.ts` — header `<h1>`, subhead copy (`formatSubhead`), tab labels (`You` / `Claude`), side-panel `<h2>`, footer copy, empty-state strings (`No words from You yet.` etc.).
-
-**Symptom:** Copy was authored incrementally per feature (F1 header, F2 tab split, F3 subhead with token totals, F4 panel header `Openers`). No single pass has read the surface as one voice. Risk: tonal drift, stale framings (e.g. F4 `Openers` label survives even after F8 swaps panel source), pun under-leveraged, glance-tool framing not reinforced.
-
-**Why it matters:** Output is a one-shot share artifact — the entire visible string surface lives in `render.ts` and gets screenshotted. Every word is on the meme. Per-feature copy edits inside other PRs are noise (conflate scope, hide tonal decisions); they belong in a dedicated surface review.
-
-**Proposed fix:** One session reads every user-visible string in `render.ts` end-to-end, drafts unified voice (glance + pun + self-roast, per `docs/overview.md` § Name + § Non-Negotiable #7), reviews against current product framing, ships single copy-only commit. No code-shape changes. Run after F8 lands so panel-label question is resolved.
 
 ### DEBT-003 — opener prefix leakage (list markers, role labels, single-letter Latin)
 
