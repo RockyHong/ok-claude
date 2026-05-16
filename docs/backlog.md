@@ -16,6 +16,33 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
+### DEBT-005 — visual UI systematic pass + remake context
+
+**Area:** `src/render.ts` visual layer (post-F8 layout: dual word-wall, fixed-ratio share image, color accents, label cards). Companion to DEBT-004 (wording-only pass) — DEBT-005 covers visual; DEBT-004 covers text.
+
+**Symptom (preemptive):** F8 ships UX decisions (dual cloud, no tabs, fixed ratio, color-accent split, label cards) locked from mockup A/B. UI polish stays out of F8 scope: font scaling curve tuning, color hex refinement, card border/shadow/typography weights, gap/padding rhythms, edge-case visual breakage on extreme corpus shapes (lopsided you/claude ratio, very few openers, single-character openers like `i`/`A` blowing up the cloud). These accumulate as visual debt during F8 ship.
+
+**Why it matters:** Output is a one-shot share image. Visual polish IS the meme — bad kerning, off-balance halves, color clash all kill share punch. Per-feature visual edits (inside F8 / F5 / F6) conflate scope and lose tonal coherence; same anti-pattern as wording (DEBT-004) but for the visual layer.
+
+**Proposed fix:** One session reads the rendered output + reference share platforms (Twitter/X, LinkedIn, Threads, Facebook), tests on 3+ corpus shapes (small / typical / extreme), tunes visual primitives, ships single visual-only commit. No data-shape changes. Run after F8 ships and DEBT-004 wording pass lands.
+
+**Context for AI doing the remake — invariants to respect (living, updated as F8 iterates):**
+
+| Locked (don't break) | Tunable (free to change) |
+| --- | --- |
+| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries; `panelUser` / `panelClaude` = top-N body-token entries | Font scaling curve (linear / sqrt / log) |
+| `firstOpener()` extraction contract (see F8 spec + `src/openers.ts`) | Color hex values per accent scheme |
+| § Non-Negotiable #6 two-axis frame (You / Claude only — no third axis) | Card border, shadow, typography weight |
+| § Non-Negotiable #3 one shot, one file — single self-contained HTML | Padding / gap rhythms |
+| Fixed-ratio output (no responsive) — see F8 spec for ratio decision | Side-label text + format (within DEBT-004 wording scope) |
+| Custom CSS word-wall primitive (no `wordcloud2` lib post-F8) | Card visibility / position (floating / strip / hidden) |
+| `paintXxx` functions are `textContent`-set (XSS-safe) — preserve | Background gradient / texture |
+| Per-side normalization choice (see F8 spec — likely independent per half) | Word-wall flow direction, justify/align |
+
+**Mockup reference:** `mockup-f8.html` (untracked, repo root) — switchable variants for visual + UX A/B during F8 brainstorm. Discard or promote post-ship.
+
+**Update trigger:** as F8 mockup iteration locks specific decisions (ratio, color scheme, layout, card style), promote them from "Tunable" to "Locked" in this table. Living context until DEBT-005 itself ships.
+
 ### DEBT-004 — UI wording surface review (full pass, not per-feature)
 
 **Area:** `src/render.ts` — header `<h1>`, subhead copy (`formatSubhead`), tab labels (`You` / `Claude`), side-panel `<h2>`, footer copy, empty-state strings (`No words from You yet.` etc.).
