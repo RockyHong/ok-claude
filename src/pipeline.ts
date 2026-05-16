@@ -1,5 +1,7 @@
 import { writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { statSync } from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 
 import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
@@ -10,8 +12,25 @@ import { firstOpener } from "./openers.js";
 import { renderHtml } from "./render.js";
 import { createProgress } from "./progress.js";
 
-const OUTPUT_FILE = "ok-claude-output.html";
 const TOP_N = 100;
+
+function outputFilename(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+    now.getDate(),
+  )}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  return `ok-claude-result-${stamp}.html`;
+}
+
+function outputDir(): string {
+  const downloads = join(homedir(), "Downloads");
+  try {
+    if (statSync(downloads).isDirectory()) return downloads;
+  } catch {
+    // Downloads missing — fall through to cwd
+  }
+  return process.cwd();
+}
 
 export type RunResult =
   | { outPath: string; reason?: undefined }
@@ -82,7 +101,7 @@ export async function run(): Promise<RunResult> {
     },
   });
 
-  const outPath = resolve(process.cwd(), OUTPUT_FILE);
+  const outPath = resolve(outputDir(), outputFilename());
   await writeFile(outPath, html, "utf8");
   return { outPath };
 }

@@ -1,8 +1,9 @@
 # Vendor
 
 Third-party browser libraries copied in-tree, inlined verbatim into the emitted
-`ok-claude-output.html` at build time. No CDN, no network at view time —
-the emitted HTML is offline-safe and tamper-stable.
+output HTML (`ok-claude-result-{YYYY-MM-DD-HHMM}.html`) at build time. No CDN
+for JS, no network at view time — the emitted HTML is offline-safe for logic
+(Google Fonts `<link>` is the one external dep; see GAP-015) and tamper-stable.
 
 ## Policy
 

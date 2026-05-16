@@ -98,6 +98,10 @@ describe("pipeline.run — first-word cloud per role (F8)", () => {
   it("partitions first-words by speaker and reports counts + token sums + date range", async () => {
     const result = await run();
     expect(result.outPath).toBeTruthy();
+    expect(result.outPath).toMatch(
+      /ok-claude-result-\d{4}-\d{2}-\d{2}-\d{4}\.html$/,
+    );
+    expect(result.outPath?.startsWith(outDir)).toBe(true);
     const html = await readFile(result.outPath!, "utf8");
 
     const data = extractData(html);

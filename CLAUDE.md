@@ -1,6 +1,6 @@
 # OK Claude
 
-> npm: `ok-claude` · display: `OK Claude` · output: `./ok-claude-output.html`
+> npm: `ok-claude` · display: `OK Claude` · output: `~/Downloads/ok-claude-result-{YYYY-MM-DD-HHMM}.html` (cwd fallback if Downloads missing)
 > Name = pun on dev's most-typed phrase to Claude Code ("ok claude, go").
 
 <!--
