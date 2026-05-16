@@ -55,91 +55,163 @@ export function renderHtml(input: RenderInput): string {
   const perDay = Math.round(burned / days);
   const burnedTxt = escapeHtml(`${fmtTokens(burned)} tokens`);
   const daysTxt = escapeHtml(`${days} days`);
-  const perDayTxt = escapeHtml(`${fmtTokens(perDay)} tokens/day`);
-  const msgCountTxt = escapeHtml(fmtTokens(input.meta.messages));
+  const perDayTxt = escapeHtml(`${fmtTokens(perDay)} tokens`);
+  const msgCountTxt = escapeHtml(input.meta.messages.toLocaleString("en-US"));
+  const sessionsTxt = escapeHtml(input.meta.sessions.toLocaleString("en-US"));
+  const daysFooterTxt = escapeHtml(String(days));
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <title>OK Claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@400;500;700&family=Inter:wght@700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #1a1d22; color: #e7eaee; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-  #stage { display: flex; justify-content: center; align-items: flex-start; padding: 32px 16px; min-height: 100vh; }
-  #artifact {
-    position: relative;
-    background: #0b0d10;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px #2a3242;
-    display: flex;
-    flex-direction: column;
-    width: min(820px, 90vw);
-    aspect-ratio: 1 / 1;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  :root {
+    --paper: #0d0d0a;
+    --ink-1: #f4f1ea;
+    --ink-2: #8a857c;
+    --ink-3: #3a3a35;
+    --amber: #d97757;
+    --rule: #f4f1ea;
   }
-  #artifact header { flex-shrink: 0; z-index: 2; padding: 18px 22px 14px; border-bottom: 3px solid #2a3242; }
-  #artifact .hl-top {
-    display: inline-block;
-    font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.01em; line-height: 1.1;
-    color: #7a838c;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #050505;
+    font-family: 'Archivo Narrow', sans-serif;
+    color: var(--ink-1);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 40px;
+  }
+  .artifact {
+    width: 1080px; height: 1080px;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.025), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(255,255,255,0.03), transparent 50%),
+      var(--paper);
+    color: var(--ink-1);
+    display: flex; flex-direction: column;
+    padding: 52px 56px 44px;
+    position: relative;
+  }
+
+  .hdr-top {
+    text-align: left;
+    font-family: 'Anton', sans-serif;
+    font-size: 64px;
+    line-height: 1.0;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+    color: var(--ink-1);
     white-space: nowrap;
   }
-  #artifact .hl-bot {
-    font-size: 0.95rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.04em; line-height: 1.25;
-    color: #7a838c; text-align: right;
-    margin-top: 8px;
-  }
-  #artifact .hl-brand { color: #ffffff; font-weight: 900; }
-  #artifact .hl-sep { color: #5b6168; margin: 0 10px; }
-  #artifact .m-accent { color: #ffffff; font-weight: 900; }
-
-  .halves { flex: 1 1 auto; display: flex; flex-direction: row; min-height: 0; min-width: 0; }
-  .half { flex: 1 1 0; min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
-  .canvas-wrap { flex: 1 1 auto; min-height: 0; min-width: 0; position: relative; }
-  .canvas-wrap canvas { display: block; width: 100%; height: 100%; }
-
-  .side-label { flex-shrink: 0; padding: 10px 18px 6px; font-size: 0.85rem; font-weight: 500; }
-  .half.user .side-label { text-align: left; color: #ffffff; opacity: 0.7; }
-  .half.claude .side-label { text-align: right; color: #d97757; opacity: 0.85; }
-
-  .install-cta {
-    flex-shrink: 0;
-    padding: 10px 18px 12px;
+  .hdr-top .num  { color: var(--amber); }
+  .hdr-top .dash { color: var(--ink-3); margin: 0 6px; }
+  .hdr-bot {
+    margin-top: 14px;
     text-align: right;
-    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
-    font-size: 0.78rem;
-    color: #5b6168;
-    letter-spacing: 0.02em;
-    border-top: 1px solid #1d2330;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    text-transform: lowercase;
+    color: var(--ink-2);
+    letter-spacing: 0.01em;
   }
-  .install-cta .cta-cmd { color: #d97757; font-weight: 700; }
-  .install-cta .cta-comment { color: #5b6168; font-style: italic; opacity: 0.8; }
+  .hdr-bot .num {
+    color: var(--ink-1);
+    font-weight: 700;
+    border-bottom: 2px solid var(--ink-1);
+    padding-bottom: 1px;
+  }
+  .hdr-rule {
+    margin-top: 24px;
+    height: 4px; background: var(--ink-1);
+    position: relative;
+  }
+  .hdr-rule::after {
+    content: ''; position: absolute; top: 7px; left: 0; right: 0;
+    height: 1px; background: var(--ink-1);
+  }
+
+  .labels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    margin-top: 28px;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink-2);
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
+  }
+  .labels .l { text-align: left; }
+  .labels .r { text-align: right; color: var(--ink-1); }
+  .labels .n { color: var(--amber); font-weight: 700; }
+
+  .halves {
+    flex: 1 1 auto;
+    margin-top: 14px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+  .divider {
+    position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 2px; background: var(--ink-1);
+  }
+  .half { position: relative; overflow: hidden; }
+  .half.user   { padding-right: 28px; }
+  .half.claude { padding-left: 28px; }
+  .cv { width: 100%; height: 100%; display: block; }
+
+  .footer {
+    margin-top: 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 14px;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--ink-1);
+    padding-top: 12px;
+  }
+  .footer .cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--ink-1);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 700;
+  }
+  .footer .cta .chev { color: var(--amber); margin-right: 4px; }
 </style>
 </head>
 <body>
-<div id="stage">
-  <div id="artifact">
-    <header id="header">
-      <div class="hl-top"><span class="hl-brand">OK. CLAUDE</span><span class="hl-sep">—</span><span class="m-accent">${burnedTxt}</span> burned in <span class="m-accent">${daysTxt}</span>.</div>
-      <div class="hl-bot">avg <span class="m-accent">${perDayTxt}</span>.</div>
-    </header>
-    <div class="halves">
-      <section class="half user">
-        <div class="side-label">This is what you dump across <span class="msg-count">${msgCountTxt}</span> messages:</div>
-        <div class="canvas-wrap"><canvas id="canvas-user"></canvas></div>
-      </section>
-      <section class="half claude">
-        <div class="side-label">And this is what claude response:</div>
-        <div class="canvas-wrap"><canvas id="canvas-claude"></canvas></div>
-      </section>
+  <div class="artifact">
+    <div class="hdr-top">
+      OK. CLAUDE <span class="dash">&mdash;</span>
+      <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
     </div>
-    <div class="install-cta">&gt; <span class="cta-cmd">npx ok-claude</span>  <span class="cta-comment"># confess yours</span></div>
+    <div class="hdr-bot">avg <span class="num">${perDayTxt}</span>/day.</div>
+    <div class="hdr-rule"></div>
+
+    <div class="labels">
+      <div class="l">this is what you dump across <span class="n">${msgCountTxt}</span> messages:</div>
+      <div class="r">and this is what claude response:</div>
+    </div>
+
+    <div class="halves">
+      <div class="divider"></div>
+      <div class="half user"><canvas id="canvas-user" class="cv"></canvas></div>
+      <div class="half claude"><canvas id="canvas-claude" class="cv"></canvas></div>
+    </div>
+
+    <div class="footer">
+      <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions &middot; mechanical freq &middot; no llm</div>
+      <div class="cta"><span class="chev">&#9656;</span>npx ok-claude</div>
+    </div>
   </div>
-</div>
 
 <script>window.__DATA__ = ${dataJson};</script>
 <script>
@@ -148,127 +220,111 @@ ${VENDOR_JS}
 <script>
 (function boot() {
   var DATA = window.__DATA__ || { topUser: [], topClaude: [], meta: {} };
-  var ACCENT = { user: '255, 255, 255', claude: '217, 119, 87' };
-  var LOCKED = {
-    origin: 'edge',
-    curve: 'log',
-    rotationUser: 0.25,
-    rotationClaude: 0,
-    fontMin: 6,
-    fontMax: 500,
-    gapRatio: 3,
-  };
 
-  var header = document.getElementById('header');
-  var canvasUser = document.getElementById('canvas-user');
-  var canvasClaude = document.getElementById('canvas-claude');
-
-  function fitHeadlineWidth() {
-    var el = header.querySelector('.hl-top');
-    if (!el) return;
-    var cs = getComputedStyle(header);
-    var padL = parseFloat(cs.paddingLeft) || 0;
-    var padR = parseFloat(cs.paddingRight) || 0;
-    var avail = header.clientWidth - padL - padR;
-    if (avail <= 0) return;
-    el.style.fontSize = '16px';
-    var natural = el.scrollWidth;
-    if (natural <= 0) return;
-    var target = 16 * (avail / natural);
-    el.style.fontSize = target + 'px';
-    natural = el.scrollWidth;
-    if (natural > 0) {
-      target = target * (avail / natural);
-      el.style.fontSize = target + 'px';
-    }
-  }
-
-  function sizeCanvas(canvas) {
+  function setupCanvas(canvas) {
     var wrap = canvas.parentElement;
     var dpr = window.devicePixelRatio || 1;
-    var w = wrap.clientWidth, h = wrap.clientHeight;
-    canvas.width = Math.max(1, Math.round(w * dpr));
-    canvas.height = Math.max(1, Math.round(h * dpr));
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    return { w: w, h: h, dpr: dpr };
+    canvas.width = Math.max(1, Math.round(wrap.clientWidth * dpr));
+    canvas.height = Math.max(1, Math.round(wrap.clientHeight * dpr));
+    canvas.style.width = wrap.clientWidth + 'px';
+    canvas.style.height = wrap.clientHeight + 'px';
   }
 
-  function originPoint(canvas, side, mode) {
-    var W = canvas.width, H = canvas.height;
-    if (mode === 'edge') {
-      if (side === 'user') return [W * 0.92, H / 2];
-      if (side === 'claude') return [W * 0.08, H / 2];
-    }
-    return [W / 2, H / 2];
+  function logScale(entries, fontMin, fontMax) {
+    var max = entries[0][1];
+    var min = entries[entries.length - 1][1];
+    return function (count) {
+      if (max === min) return (fontMin + fontMax) / 2;
+      return fontMin + (fontMax - fontMin) * (Math.log(count) - Math.log(min)) / (Math.log(max) - Math.log(min));
+    };
   }
 
-  function drawHalf(canvas, words, side, opts) {
-    var sized = sizeCanvas(canvas);
-    var dpr = sized.dpr;
-    if (!words || words.length === 0) return;
-    var max = words[0][1];
-    var fontMin = opts.fontMin * dpr;
-    var fontMax = opts.fontMax * dpr;
-    var list = words.map(function (pair) { return [pair[0], pair[1]]; });
-    var fillColor = 'rgb(' + ACCENT[side] + ')';
-    var origin = originPoint(canvas, side, opts.origin);
-    var curve = opts.curve;
-    function shape(r) {
-      if (curve === 'log') return Math.log1p(r * (Math.E - 1));
-      return r;
-    }
+  function drawHalf(canvasId, rawEntries, opts) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    setupCanvas(canvas);
+    if (!rawEntries || rawEntries.length === 0) return;
+    var dpr = window.devicePixelRatio || 1;
+    var entries = rawEntries.map(function (pair) {
+      return [opts.caseFn ? opts.caseFn(pair[0]) : pair[0], pair[1]];
+    });
+    var cw = canvas.width, ch = canvas.height;
+    var innerEdgePx = 24 * dpr;
+    var origin = opts.side === 'user'
+      ? [cw - innerEdgePx, ch / 2]
+      : [innerEdgePx, ch / 2];
     WordCloud(canvas, {
-      list: list,
-      gridSize: opts.gridSize,
-      weightFactor: function (weight) {
-        var ratio = weight / max;
-        return fontMin + shape(ratio) * (fontMax - fontMin);
-      },
-      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      fontWeight: '800',
-      color: fillColor,
-      backgroundColor: 'transparent',
-      rotateRatio: opts.rotation,
-      rotationSteps: 2,
-      minRotation: -Math.PI / 8,
-      maxRotation: Math.PI / 8,
+      list: entries,
+      fontFamily: opts.fontFamily,
+      fontWeight: opts.fontWeight || 'normal',
+      color: opts.color,
+      backgroundColor: 'rgba(0,0,0,0)',
+      gridSize: 6,
+      weightFactor: logScale(entries, opts.fontMin * dpr, opts.fontMax * dpr),
+      rotateRatio: opts.rotateRatio,
+      minRotation: -Math.PI / 9,
+      maxRotation:  Math.PI / 9,
+      rotationSteps: 0,
+      shuffle: false,
       shrinkToFit: true,
       drawOutOfBound: false,
       origin: origin,
-      shuffle: false,
     });
   }
 
-  var renderToken = 0;
-  function applyAll() {
-    var gridSize = Math.max(2, Math.round(LOCKED.fontMin * LOCKED.gapRatio));
-    var baseOpts = {
-      gridSize: gridSize,
-      origin: LOCKED.origin,
-      fontMin: LOCKED.fontMin,
-      fontMax: LOCKED.fontMax,
-      curve: LOCKED.curve,
-    };
-    var myToken = ++renderToken;
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        if (myToken !== renderToken) return;
-        drawHalf(canvasUser, DATA.topUser || [], 'user', Object.assign({}, baseOpts, { rotation: LOCKED.rotationUser }));
-        drawHalf(canvasClaude, DATA.topClaude || [], 'claude', Object.assign({}, baseOpts, { rotation: LOCKED.rotationClaude }));
-      });
+  function fitHeadline() {
+    var el = document.querySelector('.hdr-top');
+    if (!el) return;
+    var size = 88;
+    el.style.fontSize = size + 'px';
+    var guard = 120;
+    while (el.scrollWidth > el.clientWidth && size > 24 && guard-- > 0) {
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
+  }
+
+  var INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+  function upper(s) { return s.toUpperCase(); }
+
+  function renderAll() {
+    fitHeadline();
+    drawHalf('canvas-user', DATA.topUser || [], {
+      side: 'user',
+      fontFamily: INTER_STACK,
+      fontWeight: '800',
+      color: '#f4f1ea',
+      fontMin: 16, fontMax: 240,
+      rotateRatio: 0.35,
+      caseFn: upper,
+    });
+    drawHalf('canvas-claude', DATA.topClaude || [], {
+      side: 'claude',
+      fontFamily: INTER_STACK,
+      fontWeight: '800',
+      color: '#d97757',
+      fontMin: 16, fontMax: 200,
+      rotateRatio: 0,
+      caseFn: upper,
     });
   }
 
-  window.addEventListener('resize', function () {
-    applyAll();
-    fitHeadlineWidth();
-  });
+  function whenFontsReady(cb) {
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(cb);
+    } else {
+      cb();
+    }
+  }
 
-  fitHeadlineWidth();
   window.addEventListener('load', function () {
-    fitHeadlineWidth();
-    requestAnimationFrame(function () { requestAnimationFrame(applyAll); });
+    whenFontsReady(function () {
+      requestAnimationFrame(function () { requestAnimationFrame(renderAll); });
+    });
+  });
+  window.addEventListener('resize', function () {
+    clearTimeout(window.__rz);
+    window.__rz = setTimeout(renderAll, 120);
   });
 })();
 </script>

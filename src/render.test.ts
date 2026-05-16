@@ -29,10 +29,9 @@ describe("renderHtml — self-containment", () => {
     expect(html).toContain("OK Claude");
   });
 
-  it("contains no external URLs or CDN references", () => {
+  it("contains no external script or CDN references", () => {
     const html = renderHtml(input());
     expect(html).not.toMatch(/<script[^>]+src=/);
-    expect(html).not.toMatch(/<link[^>]+href=["']http/);
     expect(html).not.toContain("cdn.jsdelivr.net");
     expect(html).not.toContain("unpkg.com");
   });
@@ -45,31 +44,33 @@ describe("renderHtml — self-containment", () => {
   });
 });
 
-describe("renderHtml — dual canvas layout", () => {
-  it("renders both half containers with side-labels in the correct alignment", () => {
-    const html = renderHtml(input({ meta: { sessions: 1, messages: 42, tokensIn: 0, tokensOut: 0, dateRange: null } }));
-    expect(html).toMatch(/<section[^>]*class="half user"/);
-    expect(html).toMatch(/<section[^>]*class="half claude"/);
-    expect(html).toMatch(/\.half\.user \.side-label\s*\{[^}]*text-align: left/);
-    expect(html).toMatch(/\.half\.claude \.side-label\s*\{[^}]*text-align: right/);
+describe("renderHtml — tabloid layout", () => {
+  it("renders both half containers with divider between", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<div[^>]*class="half user"/);
+    expect(html).toMatch(/<div[^>]*class="half claude"/);
+    expect(html).toMatch(/<div[^>]*class="divider"/);
   });
 
-  it("includes lowercase asymmetric side-label copy with message-count placeholder", () => {
-    const html = renderHtml(input());
-    expect(html).toContain("This is what you dump across");
+  it("renders labels row with amber message-count accent on user side", () => {
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null } }));
+    expect(html).toMatch(/<div[^>]*class="labels"/);
+    expect(html).toContain("this is what you dump across");
     expect(html).toContain("messages:");
-    expect(html).toContain("And this is what claude response:");
-    expect(html).toMatch(/<span[^>]*class="msg-count"/);
+    expect(html).toContain("and this is what claude response:");
+    expect(html).toMatch(/<span[^>]*class="n"[^>]*>11,629<\/span>/);
   });
 
-  it("emits LOCKED config — rotation 0.25 user / 0 claude, fontMin 6, fontMax 500, gapRatio 3, edge origin", () => {
+  it("emits per-side cloud config — user rotateRatio 0.35 / fontMax 240, claude rotateRatio 0 / fontMax 200, gridSize 6", () => {
     const html = renderHtml(input());
-    expect(html).toContain("rotationUser: 0.25");
-    expect(html).toContain("rotationClaude: 0");
-    expect(html).toContain("fontMin: 6");
-    expect(html).toContain("fontMax: 500");
-    expect(html).toContain("gapRatio: 3");
-    expect(html).toContain("origin: 'edge'");
+    expect(html).toContain("rotateRatio: 0.35");
+    expect(html).toContain("rotateRatio: 0");
+    expect(html).toContain("fontMax: 240");
+    expect(html).toContain("fontMax: 200");
+    expect(html).toContain("fontMin: 16");
+    expect(html).toContain("gridSize: 6");
+    expect(html).toContain("'#f4f1ea'");
+    expect(html).toContain("'#d97757'");
   });
 
   it("does NOT emit tab / opener-panel / strip surface (removed in F8)", () => {
@@ -82,8 +83,8 @@ describe("renderHtml — dual canvas layout", () => {
   });
 });
 
-describe("renderHtml — brutal header", () => {
-  it("emits the OK. CLAUDE brand wordmark + burn-fact + perDay sub-line", () => {
+describe("renderHtml — tabloid header", () => {
+  it("emits hdr-top brand wordmark + burn-fact + hdr-bot per-day sub-line with amber num accents", () => {
     const html = renderHtml(
       input({
         meta: {
@@ -95,33 +96,42 @@ describe("renderHtml — brutal header", () => {
         },
       }),
     );
-    expect(html).toMatch(/class="hl-top"/);
-    expect(html).toMatch(/class="hl-bot"/);
-    expect(html).toMatch(/class="hl-brand"[^>]*>OK\. CLAUDE/);
+    expect(html).toMatch(/<div[^>]*class="hdr-top"/);
+    expect(html).toMatch(/<div[^>]*class="hdr-bot"/);
+    expect(html).toContain("OK. CLAUDE");
     expect(html).toContain("burned in");
     expect(html).toContain("avg");
-    expect(html).toContain("tokens/day");
-    // formatted token total (10.3M) appears as accent
-    expect(html).toMatch(/class="m-accent"/);
+    expect(html).toContain("/day");
+    expect(html).toMatch(/<span class="num">10\.3M tokens<\/span>/);
+    expect(html).toMatch(/<span class="num">30 days<\/span>/);
   });
 
-  it("includes inline JS fitHeadlineWidth() measure-scale routine", () => {
+  it("includes double-rule under header", () => {
     const html = renderHtml(input());
-    expect(html).toContain("fitHeadlineWidth");
+    expect(html).toMatch(/<div[^>]*class="hdr-rule"/);
+  });
+
+  it("includes fitHeadline auto-shrink + whenFontsReady boot gate", () => {
+    const html = renderHtml(input());
+    expect(html).toContain("fitHeadline");
     expect(html).toContain("scrollWidth");
+    expect(html).toContain("whenFontsReady");
+    expect(html).toContain("document.fonts");
   });
 });
 
-describe("renderHtml — install CTA", () => {
-  it("renders the install-cta inside #artifact (travels with PNG export)", () => {
-    const html = renderHtml(input());
-    // CTA element exists
-    expect(html).toMatch(/<div[^>]*class="install-cta"/);
-    expect(html).toMatch(/<span[^>]*class="cta-cmd"[^>]*>npx ok-claude/);
-    expect(html).toContain("# confess yours");
-    // CTA must be inside #artifact, not below it
-    const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<script/);
-    expect(artifactMatch?.[0]).toContain("install-cta");
+describe("renderHtml — footer + CTA", () => {
+  it("renders footer ed-line + monospace CTA inside .artifact (travels with PNG export)", () => {
+    const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null } }));
+    expect(html).toMatch(/<div[^>]*class="footer"/);
+    expect(html).toContain("vol. you");
+    expect(html).toContain("mechanical freq");
+    expect(html).toContain("no llm");
+    expect(html).toContain("441 sessions");
+    expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*npx ok-claude/);
+    const artifactMatch = html.match(/<div[^>]*class="artifact"[^>]*>[\s\S]*?<\/div>\s*<script/);
+    expect(artifactMatch?.[0]).toContain("footer");
+    expect(artifactMatch?.[0]).toContain("cta");
   });
 });
 

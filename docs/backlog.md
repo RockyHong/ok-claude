@@ -16,6 +16,38 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
+### GAP-015 — Google Fonts external dependency in tabloid lock breaks § NN#3 self-contained intent
+
+**Area:** `src/render.ts` head — `<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow&family=Inter&family=JetBrains+Mono...">`. Required by DEBT-005 tabloid lock (UI tier = Anton headline + Archivo Narrow body + JetBrains Mono CTA; Cloud tier = Inter 800 workhorse).
+
+**Symptom:** Output HTML pulls four font families from `fonts.googleapis.com` at render time. Violates § Non-Negotiable #3 ("One shot, one file. Run → single self-contained HTML auto-opens"). Offline render falls back to system fonts (Archivo Narrow / Anton / Inter / JetBrains Mono all absent on stock Win/Mac/Linux installs without browser font cache) → degraded look (system-ui everywhere, no display face, no monospace personality, headline auto-fit math thrown by different metrics).
+
+**Why it matters:** Self-contained = the share-loop primitive. User runs `npx ok-claude` on plane / VPN-blocked corp net / behind firewall → opens rendered HTML → sees system-font fallback → loses tabloid grammar. Compounds for F5 PNG export: `html-to-image` snapshot before fonts download = wrong metrics baked into PNG (already mitigated by `whenFontsReady()` boot gate, but only if fonts EVER load).
+
+**Proposed fix paths:**
+
+1. **Inline base64 woff2 in CSS** — embed all 4 family weights as `@font-face { src: url('data:font/woff2;base64,...') }`. ~150-300 KB per font × 4 = adds ~600 KB-1.2 MB to output HTML. True self-containment. Bundle step needs woff2 source tree + base64 encode at build time. Hits tsup build pipeline.
+2. **Subset fonts to ASCII + common symbols** — base64 subset reduces per-font weight ~80%. ~30-60 KB × 4 = ~150-250 KB total addition. Use `glyphhanger` or `fonttools subset` at build time. Tradeoff: locks character set; CJK breaks (only relevant for Cloud tier — Latin-only fonts; CJK in cloud falls back to system CJK which is fine).
+3. **Drop Google Fonts; use system-stack only** — abandon Anton (`'Impact', 'Haettenschweiler', 'Franklin Gothic Bold', sans-serif`-ish stack), Archivo Narrow (`'Arial Narrow', sans-serif`), Inter (`system-ui, -apple-system, ...`), JetBrains Mono (`ui-monospace, ...`). Loses tabloid display-face personality but eliminates dep. Reframes design lock.
+4. **Ship as-is; accept online dep** — document the trade-off, add `<noscript>` fallback note, move on. Pragmatic; matches "npm distribution" reality (user already needs `npx` = network).
+
+Pick on next session; decision likely influenced by F5 (`png-export`) timing — PNG export is canonical artifact; PNG fonts get baked at render time so online-fetch latency = export latency, OR PNG ships system-fallback if fonts hadn't loaded.
+
+### DEBT-007 — npm package name decision (`ok-claude` vs `ok.claude`) pending before F6 publish
+
+**Area:** `package.json` `name` field; brand wordmark in `src/render.ts` (`OK. CLAUDE` period-bound display); footer CTA copy (`npx ok-claude`); README install instructions; npm registry occupation.
+
+**Symptom:** Brand wordmark uses period (`OK. CLAUDE` — tabloid grammar locked DEBT-005-era). npm bin / install command uses hyphen (`npx ok-claude`). Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Pre-publish, no name committed.
+
+**Why it matters:** Ships at F6 (`npm-publish` in roadmap) — wrong call now = rename pain post-publish + broken share-loop links if early adopters install one and tool publishes as other.
+
+**Options:**
+1. **`ok-claude` only** (hyphen convention) — wordmark stays `OK. CLAUDE` for visual punch but install is `npx ok-claude`. Minor visual-to-install translation cost for viewer-to-installer. Most npm-idiomatic.
+2. **`ok.claude` primary + `ok-claude` shim** — claim both. Primary = period-matching wordmark (zero-translation viewer→install). Shim package redirects. Doubles maintenance + registry footprint; npm allows periods in names.
+3. **`ok-claude` only + drop period from wordmark** — `OK CLAUDE` instead of `OK. CLAUDE`. Loses period-as-tic (the brand pun's literal mechanical-comma — `ok claude, go` becomes `OK CLAUDE`, drops the prosody hit).
+
+Resolve before F6 publish kickoff. Likely (1) — period stays visual, install stays hyphen, viewers manage.
+
 ### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
 
 **Area:** `src/pipeline.ts` body-token tokenize-and-fold + per-side body-token `topN` call; `src/render.ts` panel slot + `paintPanel` (whatever F8 wire names it); `src/tokenize.ts` body-token consumer paths.
@@ -34,62 +66,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 - Drop `panelUser` / `panelClaude` (or equivalent F8-wire names) from render-input shape
 - Drop `paintPanel` from `render.ts` if rendered
 - Verify `tokenize.ts` still needed (likely yes — `firstOpener` may depend on segmenter setup); audit imports
-- Update F8 spec + DEBT-005 locked table to reflect single-axis ship
-- Drop DATA.bodytokenUser / DATA.bodytokenClaude from `mockup-f8.html` if mockup still around
-
-**Mockup reference:** Drop happened in `mockup-f8.html`. Strip HTML/CSS/JS removed; `DATA.bodytokenUser` / `DATA.bodytokenClaude` arrays retained as restore-bait for fast A/B if vocab axis returns.
-
-**F8 spec impact:** Spec rewritten 2026-05-16 — `docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md` now ships single-axis cloud-only artifact (decision #12 = strip dropped). Pipeline body-token tokenize/fold/topN stays live as restore-bait per this debt; render no longer consumes it.
-
-**DEBT-005 impact:** Locks table shrinks (strip-related rules vanish: status-line layout, bottom cardpos, hairline rule, lowercase-strip-case, `vocab:` prefix). Update during F8 wire.
-
-### DEBT-005 — visual UI systematic pass + remake context
-
-**Area:** `src/render.ts` visual layer (F8-shipped structure: dual canvas wordcloud, fixed 1:1 share image, brutal headline header, asymmetric side-labels, install-CTA footer, white/amber identity pair). Copy already locked (mockup migrated 1:1 in F8 wire); this debt is aesthetic-polish only.
-
-**Symptom:** F8 mockup iteration locked structural UX + copy (see Locked table). Visual polish flagged for systematic design-pass. Specifically: dim-hierarchy not unified across header / strip / labels (ad-hoc gray values `#5b6168` / `#7a838c` / `#8a939b`). Uppercase usage inconsistent — wordmark + headline uppercase, strip + labels lowercase, no systematic rule for shout-vs-whisper. Color emphasis placement ad-hoc (white-bold for numbers, amber for identity, gray for scaffold; no rule for where each applies). Padding rhythms set per-section without consistency pass. Edge-case visual breakage uncharted: lopsided user/claude corpus, single-letter openers (`i` / `A`) inflating cloud, very-few-openers underfilling halves.
-
-**Why it matters:** Output is a one-shot share image. Visual coherence IS the meme — inconsistent hierarchy reads as amateur, breaks share-loop punch. Per-feature pixel-tweaks conflate scope; systematic rules need one dedicated session.
-
-**Proposed fix:** One session reads rendered output on 3+ corpus shapes (small / typical / extreme), reference share platforms (Twitter/X, LinkedIn, Discord). Defines systematic rules for: dim hierarchy (3-tier gray ladder w/ explicit hex map), uppercase usage policy (when shout / when whisper), color emphasis placement (identity vs scaffold vs accent), padding rhythm across sections, edge-case rendering. Ships single visual-only commit. No data-shape, no copy changes. Run after F8 ships.
-
-**Context for AI doing the remake — F8 mockup-locked invariants:**
-
-| Locked (don't break) | Tunable (design-pass scope) |
-| --- | --- |
-| 1:1 square ratio output (universal share-platform fit per § NN#3 one-shot) | Dim-gray hierarchy — currently 3 ad-hoc values; needs systematic ladder |
-| Dual horizontal halves: left=you, right=Claude (per § NN#6 two-axis) | Uppercase usage policy — needs systematic shout/whisper rules |
-| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries (body-token tokenize/fold path latent per DEBT-006 — no `panelUser` / `panelClaude` keys) | Color emphasis placement system (where white-bold vs amber-identity vs gray-scaffold) |
-| `firstOpener()` extraction contract (see F8 spec + `src/openers.ts`) | Sub-line typography distinctness (currently uppercase-tracked, may rework) |
-| § Non-Negotiable #3 one shot, one file — single self-contained HTML | Padding rhythm across header / strip / side-label / footer sections |
-| `paintXxx` functions `textContent`-set (XSS-safe) — preserve | Visual weight balance under lopsided corpus (user tiny / claude huge or reverse) |
-| `wordcloud2` vendored at `src/vendor/wordcloud2.js` (REVERSED earlier "drop it" lean — needed for spiral + origin seed) | Edge-case rendering: single-char openers blowing up, very-few-opener underfill, lopsided sides |
-| Brand wordmark display: `OK. CLAUDE` (period-bound, single inline unit) | Exact accent hex (`#d97757` Claude amber — locked as Claude brand, but placement rules tunable) |
-| Footer install-CTA: bottom-right `▸ npx ok-claude`, monospace micro-text, travels w/ PNG export | |
-| Identity color pair: white=user, amber `#d97757`=Claude. Identity colors live on side-labels + per-side card-word colors. NOT on emphasis (emphasis uses white-bold) | |
-| Token source: `usage.input_tokens` + `usage.output_tokens` from cc session log (parse.ts:105-110) — NOT internal tokenizer. Cache tokens (`cache_creation_input` / `cache_read_input`) NOT summed; only relevant if total-burn pivots include input-side accounting | |
-| Burn-display: output-tokens-only ("burn-brag" cultural trend) — drop input-token display | |
-| Cloud render: no alpha (font size carries weight signal); font range 6→500px; gap = 3× fontMin; adaptive N via wordcloud2 `drawOutOfBound: false` | |
-| Rotation: user=25% chaos, claude=0% order (asymmetric pun) | |
-| Side-label flow position: own row above canvas (NOT absolute overlay), mirror align (user-left / claude-right) | |
-| Side-label copy: user `This is what you dump across [N] messages:` (L-align, white@0.7) / claude `And this is what claude response:` (R-align, amber@0.85). Lowercase. Attack-then-react cadence | |
-| Header: 2-line burn-truth structure. Top: brand + burn-fact, L-aligned, auto-fits header width via JS measure-scale. Bottom: avg-velocity, R-aligned. Sentence pattern: `OK. CLAUDE — [10.3M tokens] burned in [30 days].` / `avg [343K tokens/day].` with white-bold accent on numbers, gray scaffold on verbs/connectives | |
-
-**Design direction locked 2026-05-16:** tabloid lane — dark mode warm slab (`#0d0d0a`), two-sub-system typography (UI tier = Anton display headline + Archivo Narrow body; Cloud tier = Inter 800 workhorse), single-line auto-fit headline (`fitHeadline()` JS shrink-to-fit), warm-ink ladder (`--ink-1 #f4f1ea` shout / `--ink-2 #8a857c` scaffold / `--ink-3 #3a3a35` fade), identity colors retained (warm-white user, amber Claude). Mockup reference: `mockups/tabloid.html`. Implementation plan: `docs/superpowers/plans/2026-05-16-debt-005-tabloid-lock.md`.
-
-**Locks added this session (promote from Tunable column above):**
-- Canonical color mode: DARK (rationale: PNG = canonical artifact; Twitter dark-mode dominant; "anti-Wrapped" anti-celebration cue)
-- Two-sub-system architecture: UI typography ≠ Cloud typography (UI may be display/expressive; Cloud MUST be workhorse legible 14→240px)
-- Dim hierarchy: explicit 3-tier warm-ink ladder above
-- Uppercase shout/whisper policy: brand wordmark + headline + cloud body = UPPERCASE; labels + footer meta = lowercase
-- Color emphasis placement: white-bold on numeric burns inside headline; amber on Claude identity (side label + cloud + CTA chevron); ink-1 (warm-white) on user identity; ink-2 scaffold for connectives/verbs; ink-3 for fade (em-dash, ed-line meta)
-- Headline width treatment: single-line `white-space: nowrap` + `fitHeadline()` auto-shrink (start 88px, floor 24px, measure `el.scrollWidth > el.clientWidth`)
-
-**Mockup reference (superseded):** `mockup-f8.html` (repo root, committed) was prior live UX playground (F8-era structure + copy lock). `mockups/tabloid.html` (this session) is the canonical visual lock. Keep mockup-f8.html until DEBT-005 ships, then delete both per § Doc Sync temporal cleanup.
-
-**npm name decision pending:** Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Current footer/docs use hyphen convention; brand wordmark uses period. Decision pending: ship `ok-claude` only (hyphen-convention) vs claim both with `ok.claude` primary + `ok-claude` shim (zero-translation viewer→install). Resolve before publish — log as separate item if not handled in F8 wire.
-
-**Update trigger:** as implementation progresses, promote remaining Tunable items to Locked. DEBT-005 entry deletes when work ships.
 
 ### DEBT-003 — opener prefix leakage (list markers, role labels, single-letter Latin)
 
