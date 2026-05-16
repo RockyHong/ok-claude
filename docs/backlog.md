@@ -16,32 +16,71 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
+### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
+
+**Area:** `src/pipeline.ts` body-token tokenize-and-fold + per-side body-token `topN` call; `src/render.ts` panel slot + `paintPanel` (whatever F8 wire names it); `src/tokenize.ts` body-token consumer paths.
+
+**Symptom:** F8 mockup iteration dropped the bottom-strip "vocab" surface (per first-principle audit against `docs/overview.md` §Problem 30s-glance / §NN#7 meme-energy / §NN#6 two-axis spirit — strip failed every test, generic dev vocab `need / run / repo / skill` not unique-to-you punch). Cloud-only artifact ships. But pipeline still tokenizes body content + computes per-side top-N body-token frequencies that no surface consumes. Dead-data path post-F8 wire.
+
+**Why it matters:** Code that exists but isn't rendered = rot risk — slow drift, future contributor confusion ("why is body-token tokenize here?"), tiny per-event perf cost (fold against frequency Map for every token). Counter-argument for keeping latent: if §Problem ever re-frames toward analytical/reflection, or a new surface (different visual treatment, header sub-stat, etc) uses body-token freq, the data path is already there.
+
+**Decision deferred — monitor post-publish for restore signal:**
+- If any user begs for vocab list / "what words did I use most" within 2 release cycles → restore strip OR design alt surface using existing data path
+- If no demand → clean up (delete dead body-token tokenize/fold/topN paths, simplify pipeline to first-word-only)
+
+**If cleaning up later:**
+- Drop body-token tokenize fold from `pipeline.ts` (keep `firstOpener` fold only)
+- Drop `topN(userTokens, ...)` + `topN(claudeTokens, ...)` calls
+- Drop `panelUser` / `panelClaude` (or equivalent F8-wire names) from render-input shape
+- Drop `paintPanel` from `render.ts` if rendered
+- Verify `tokenize.ts` still needed (likely yes — `firstOpener` may depend on segmenter setup); audit imports
+- Update F8 spec + DEBT-005 locked table to reflect single-axis ship
+- Drop DATA.bodytokenUser / DATA.bodytokenClaude from `mockup-f8.html` if mockup still around
+
+**Mockup reference:** Drop happened in `mockup-f8.html`. Strip HTML/CSS/JS removed; `DATA.bodytokenUser` / `DATA.bodytokenClaude` arrays retained as restore-bait for fast A/B if vocab axis returns.
+
+**F8 spec impact:** Current F8 spec (`docs/superpowers/specs/2026-05-15-mood-cloud-pivot.md`) locks dual-axis (cloud + panel). Spec rewrite needed pre-wire to remove panel decisions (#2, #7), drop `paintOpeners → paintPanel` rename, drop `panelUser`/`panelClaude` render-input keys, drop `TOP_PANEL = 5` constant, update success criteria.
+
+**DEBT-005 impact:** Locks table shrinks (strip-related rules vanish: status-line layout, bottom cardpos, hairline rule, lowercase-strip-case, `vocab:` prefix). Update during F8 wire.
+
 ### DEBT-005 — visual UI systematic pass + remake context
 
-**Area:** `src/render.ts` visual layer (post-F8 layout: dual word-wall, fixed-ratio share image, color accents, label cards). Companion to DEBT-004 (wording-only pass) — DEBT-005 covers visual; DEBT-004 covers text.
+**Area:** `src/render.ts` visual layer (F8 mockup-locked structure: dual canvas wordcloud, fixed 1:1 share image, brutal headline header, status-line strip, footer install-CTA, white/amber identity pair). Companion to DEBT-004 (text/wording) — much of DEBT-004 scope folded into F8 mockup copy-locks; residual = "verify mockup copy migrates 1:1 to src/render.ts post-F8 wire."
 
-**Symptom (preemptive):** F8 ships UX decisions (dual cloud, no tabs, fixed ratio, color-accent split, label cards) locked from mockup A/B. UI polish stays out of F8 scope: font scaling curve tuning, color hex refinement, card border/shadow/typography weights, gap/padding rhythms, edge-case visual breakage on extreme corpus shapes (lopsided you/claude ratio, very few openers, single-character openers like `i`/`A` blowing up the cloud). These accumulate as visual debt during F8 ship.
+**Symptom:** F8 mockup iteration locked structural UX + copy (see Locked table). Visual polish flagged for systematic design-pass. Specifically: dim-hierarchy not unified across header / strip / labels (ad-hoc gray values `#5b6168` / `#7a838c` / `#8a939b`). Uppercase usage inconsistent — wordmark + headline uppercase, strip + labels lowercase, no systematic rule for shout-vs-whisper. Color emphasis placement ad-hoc (white-bold for numbers, amber for identity, gray for scaffold; no rule for where each applies). Padding rhythms set per-section without consistency pass. Edge-case visual breakage uncharted: lopsided user/claude corpus, single-letter openers (`i` / `A`) inflating cloud, very-few-openers underfilling halves.
 
-**Why it matters:** Output is a one-shot share image. Visual polish IS the meme — bad kerning, off-balance halves, color clash all kill share punch. Per-feature visual edits (inside F8 / F5 / F6) conflate scope and lose tonal coherence; same anti-pattern as wording (DEBT-004) but for the visual layer.
+**Why it matters:** Output is a one-shot share image. Visual coherence IS the meme — inconsistent hierarchy reads as amateur, breaks share-loop punch. Per-feature pixel-tweaks conflate scope; systematic rules need one dedicated session.
 
-**Proposed fix:** One session reads the rendered output + reference share platforms (Twitter/X, LinkedIn, Threads, Facebook), tests on 3+ corpus shapes (small / typical / extreme), tunes visual primitives, ships single visual-only commit. No data-shape changes. Run after F8 ships and DEBT-004 wording pass lands.
+**Proposed fix:** One session reads rendered output on 3+ corpus shapes (small / typical / extreme), reference share platforms (Twitter/X, LinkedIn, Discord). Defines systematic rules for: dim hierarchy (3-tier gray ladder w/ explicit hex map), uppercase usage policy (when shout / when whisper), color emphasis placement (identity vs scaffold vs accent), padding rhythm across sections, edge-case rendering. Ships single visual-only commit. No data-shape, no copy changes. Run after F8 ships.
 
-**Context for AI doing the remake — invariants to respect (living, updated as F8 iterates):**
+**Context for AI doing the remake — F8 mockup-locked invariants:**
 
-| Locked (don't break) | Tunable (free to change) |
+| Locked (don't break) | Tunable (design-pass scope) |
 | --- | --- |
-| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries; `panelUser` / `panelClaude` = top-N body-token entries | Font scaling curve (linear / sqrt / log) |
-| `firstOpener()` extraction contract (see F8 spec + `src/openers.ts`) | Color hex values per accent scheme |
-| § Non-Negotiable #6 two-axis frame (You / Claude only — no third axis) | Card border, shadow, typography weight |
-| § Non-Negotiable #3 one shot, one file — single self-contained HTML | Padding / gap rhythms |
-| Fixed-ratio output (no responsive) — see F8 spec for ratio decision | Side-label text + format (within DEBT-004 wording scope) |
-| Custom CSS word-wall primitive (no `wordcloud2` lib post-F8) | Card visibility / position (floating / strip / hidden) |
-| `paintXxx` functions are `textContent`-set (XSS-safe) — preserve | Background gradient / texture |
-| Per-side normalization choice (see F8 spec — likely independent per half) | Word-wall flow direction, justify/align |
+| 1:1 square ratio output (universal share-platform fit per § NN#3 one-shot) | Dim-gray hierarchy — currently 3 ad-hoc values; needs systematic ladder |
+| Dual horizontal halves: left=you, right=Claude (per § NN#6 two-axis) | Uppercase usage policy — needs systematic shout/whisper rules |
+| Data shape: `topUser` / `topClaude` = `Array<[surface, count]>` first-word entries; `panelUser` / `panelClaude` = top-N body-token entries | Color emphasis placement system (where white-bold vs amber-identity vs gray-scaffold) |
+| `firstOpener()` extraction contract (see F8 spec + `src/openers.ts`) | Sub-line typography distinctness (currently uppercase-tracked, may rework) |
+| § Non-Negotiable #3 one shot, one file — single self-contained HTML | Padding rhythm across header / strip / side-label / footer sections |
+| `paintXxx` functions `textContent`-set (XSS-safe) — preserve | Visual weight balance under lopsided corpus (user tiny / claude huge or reverse) |
+| `wordcloud2` vendored at `src/vendor/wordcloud2.js` (REVERSED earlier "drop it" lean — needed for spiral + origin seed) | Edge-case rendering: single-char openers blowing up, very-few-opener underfill, lopsided sides |
+| Brand wordmark display: `OK. CLAUDE` (period-bound, single inline unit) | Exact accent hex (`#d97757` Claude amber — locked as Claude brand, but placement rules tunable) |
+| Footer install-CTA: bottom-right `▸ npx ok-claude`, monospace micro-text, travels w/ PNG export | |
+| Identity color pair: white=user, amber `#d97757`=Claude. Identity colors live on side-labels + per-side card-word colors. NOT on emphasis (emphasis uses white-bold) | |
+| Token source: `usage.input_tokens` + `usage.output_tokens` from cc session log (parse.ts:105-110) — NOT internal tokenizer. Cache tokens (`cache_creation_input` / `cache_read_input`) NOT summed; only relevant if total-burn pivots include input-side accounting | |
+| Burn-display: output-tokens-only ("burn-brag" cultural trend) — drop input-token display | |
+| Cloud render: no alpha (font size carries weight signal); font range 6→500px; gap = 3× fontMin; adaptive N via wordcloud2 `drawOutOfBound: false` | |
+| Rotation: user=25% chaos, claude=0% order (asymmetric pun) | |
+| Strip: status-line layout (inline pairs flex-wrap, lowercase, count adjacent to word, hairline rule above, full-width, bottom of artifact) | |
+| Side-label flow position: own row above canvas (NOT absolute overlay), mirror align (user-left / claude-right) | |
+| Self-explanatory copy: cloud labels `how you start.` / `how Claude starts.`; strip prefix `your common words:` / `Claude's common words:` | |
+| Header: 2-line burn-truth structure. Top: brand + burn-fact, L-aligned, auto-fits header width via JS measure-scale. Bottom: avg-velocity, R-aligned. Sentence pattern: `OK. CLAUDE — [10.3M tokens] burned in [30 days].` / `avg [343K tokens/day].` with white-bold accent on numbers, gray scaffold on verbs/connectives | |
 
-**Mockup reference:** `mockup-f8.html` (untracked, repo root) — switchable variants for visual + UX A/B during F8 brainstorm. Discard or promote post-ship.
+**Mockup reference:** `mockup-f8.html` (repo root, committed) — live UX playground. Structural + copy decisions locked here; aesthetic flagged to this debt.
 
-**Update trigger:** as F8 mockup iteration locks specific decisions (ratio, color scheme, layout, card style), promote them from "Tunable" to "Locked" in this table. Living context until DEBT-005 itself ships.
+**npm name decision pending:** Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Current footer/docs use hyphen convention; brand wordmark uses period. Decision pending: ship `ok-claude` only (hyphen-convention) vs claim both with `ok.claude` primary + `ok-claude` shim (zero-translation viewer→install). Resolve before publish — log as separate item if not handled in F8 wire.
+
+**Update trigger:** as F8 mockup iteration locks more decisions, promote them above. Living context until DEBT-005 itself ships.
 
 ### DEBT-004 — UI wording surface review (full pass, not per-feature)
 
