@@ -1,6 +1,6 @@
 node_modules/
 dist/
-ok-claude-output.html
+ok-claude-*.html
 *.log
 .DS_Store
 scripts/
