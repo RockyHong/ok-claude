@@ -14,6 +14,7 @@ export type RenderInput = {
     tokensIn: number;
     tokensOut: number;
     dateRange: [string, string] | null;
+    timestamp: string;
   };
 };
 

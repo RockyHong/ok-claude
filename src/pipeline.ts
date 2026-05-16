@@ -14,11 +14,14 @@ import { createProgress } from "./progress.js";
 
 const TOP_N = 100;
 
-function outputFilename(now: Date = new Date()): string {
+function buildStamp(now: Date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
-  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
     now.getDate(),
   )}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+}
+
+function outputFilename(stamp: string): string {
   return `ok-claude-result-${stamp}.html`;
 }
 
@@ -88,6 +91,8 @@ export async function run(): Promise<RunResult> {
     TOP_N,
   ).map((e) => [e.display, e.count]);
 
+  const stamp = buildStamp();
+
   const html = renderHtml({
     topUser,
     topClaude,
@@ -98,10 +103,11 @@ export async function run(): Promise<RunResult> {
       tokensOut,
       dateRange:
         minTs !== undefined && maxTs !== undefined ? [minTs, maxTs] : null,
+      timestamp: stamp,
     },
   });
 
-  const outPath = resolve(outputDir(), outputFilename());
+  const outPath = resolve(outputDir(), outputFilename(stamp));
   await writeFile(outPath, html, "utf8");
   return { outPath };
 }

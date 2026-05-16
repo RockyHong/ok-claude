@@ -11,6 +11,7 @@ function input(over: Partial<RenderInput> = {}): RenderInput {
       tokensIn: over.meta?.tokensIn ?? 0,
       tokensOut: over.meta?.tokensOut ?? 0,
       dateRange: over.meta?.dateRange ?? null,
+      timestamp: over.meta?.timestamp ?? "2026-05-16-1234",
     },
   };
 }
@@ -53,7 +54,7 @@ describe("renderHtml — tabloid layout", () => {
   });
 
   it("renders labels row with amber message-count accent on user side", () => {
-    const html = renderHtml(input({ meta: { sessions: 1, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null } }));
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
     expect(html).toMatch(/<div[^>]*class="labels"/);
     expect(html).toContain("this is what you dump across");
     expect(html).toContain("messages:");
@@ -93,6 +94,7 @@ describe("renderHtml — tabloid header", () => {
           tokensIn: 0,
           tokensOut: 10_276_899,
           dateRange: ["2026-04-15T00:00:00Z", "2026-05-15T00:00:00Z"],
+          timestamp: "2026-05-16-1234",
         },
       }),
     );
@@ -122,7 +124,7 @@ describe("renderHtml — tabloid header", () => {
 
 describe("renderHtml — footer + CTA", () => {
   it("renders footer ed-line + monospace CTA inside .artifact (travels with PNG export)", () => {
-    const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null } }));
+    const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
     expect(html).toMatch(/<div[^>]*class="footer"/);
     expect(html).toContain("vol. you");
     expect(html).toContain("mechanical freq");
