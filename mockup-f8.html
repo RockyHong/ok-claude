@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OK Claude — F8 mockup v2 (wordcloud2 dual-canvas)</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #1a1d22; color: #e7eaee; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+  /* Control panel */
+  #controls {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 12px 18px;
+    padding: 12px 20px; background: #11141a; border-bottom: 1px solid #2a3242;
+    font-size: 0.85rem;
+  }
+  #controls label { display: flex; flex-direction: column; gap: 2px; color: #8a939b; }
+  #controls select, #controls input[type="range"] {
+    background: #1d2330; color: #e7eaee; border: 1px solid #2a3242; border-radius: 6px;
+    padding: 4px 8px; font: inherit;
+  }
+  #controls input[type="range"] { padding: 0; height: 22px; }
+  #controls .stamp { color: #5b6168; align-self: center; margin-left: auto; font-size: 0.78rem; }
+  #controls .val { color: #c4cdd7; font-variant-numeric: tabular-nums; font-size: 0.75rem; }
+
+  #hint { padding: 8px 20px; color: #5b6168; font-size: 0.78rem; background: #11141a; border-bottom: 1px solid #1d2330; }
+
+  /* Stage */
+  #stage {
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 32px 16px; min-height: calc(100vh - 100px);
+  }
+
+  /* Artifact */
+  #artifact {
+    position: relative;
+    background: #0b0d10;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.5), 0 0 0 1px #2a3242;
+    display: flex;
+    flex-direction: column;
+  }
+  #artifact[data-ratio="1x1"]   { width: min(820px, 90vw); aspect-ratio: 1 / 1; }
+  #artifact[data-ratio="4x5"]   { width: min(720px, 90vw); aspect-ratio: 4 / 5; }
+  #artifact[data-ratio="16x9"]  { width: min(1180px, 90vw); aspect-ratio: 16 / 9; }
+  #artifact[data-ratio="191x1"] { width: min(1180px, 90vw); aspect-ratio: 1.91 / 1; }
+
+  #artifact header {
+    padding: 14px 20px 8px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    flex-shrink: 0; z-index: 2;
+  }
+  #artifact h1 { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  #artifact .meta { color: #5b6168; font-size: 0.78rem; }
+
+  .halves {
+    flex: 1 1 auto; display: flex; min-height: 0; min-width: 0;
+  }
+  #artifact[data-layout="horizontal"] .halves { flex-direction: row; }
+  #artifact[data-layout="vertical"]   .halves { flex-direction: column; }
+
+  .half {
+    flex: 1 1 0; min-width: 0; min-height: 0;
+    position: relative; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Canvas wrap fills half */
+  .canvas-wrap {
+    flex: 1 1 auto; min-height: 0; min-width: 0;
+    position: relative;
+  }
+  .canvas-wrap canvas {
+    display: block;
+    width: 100%; height: 100%;
+  }
+
+  /* Side label overlay */
+  .side-label {
+    position: absolute; top: 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em;
+    color: #5b6168; text-transform: uppercase; pointer-events: none; z-index: 3;
+  }
+  .half.user .side-label { left: 14px; }
+  .half.claude .side-label { right: 14px; }
+
+  /* Cards */
+  .card {
+    background: rgba(17, 20, 26, 0.88);
+    backdrop-filter: blur(6px);
+    border: 1px solid #1d2330; border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .card .row { display: flex; justify-content: space-between; gap: 16px; }
+  .card .row .w { color: #c4cdd7; }
+  .card .row .c { color: #5b6168; font-variant-numeric: tabular-nums; }
+
+  #artifact[data-cardpos="floating"] .card {
+    position: absolute; bottom: 14px;
+    max-width: 44%;
+  }
+  #artifact[data-cardpos="floating"] .half.user .card { left: 14px; }
+  #artifact[data-cardpos="floating"] .half.claude .card { right: 14px; }
+
+  #artifact[data-cardpos="strip"] .card {
+    position: relative;
+    border-radius: 0; border: none; border-top: 1px solid #1d2330;
+    padding: 10px 16px; max-width: none;
+  }
+  #artifact[data-cardpos="hidden"] .card { display: none; }
+
+  /* Color: locked white/amber. Cards + side-labels static; cloud per-word alpha via canvas. */
+  .half.user .card .w { color: #ffffff; }
+  .half.claude .card .w { color: #d97757; }
+  .half.user .side-label { color: #ffffff; opacity: 0.6; }
+  .half.claude .side-label { color: #d97757; opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <label>Min font (px)
+    <input type="range" id="fontmin" min="6" max="40" step="1" value="12" />
+    <span class="val" id="fontmin-val">12</span>
+  </label>
+  <label>Max font (px)
+    <input type="range" id="fontmax" min="60" max="500" step="10" value="100" />
+    <span class="val" id="fontmax-val">100</span>
+  </label>
+  <label>Min alpha cap
+    <input type="range" id="mincap" min="0.05" max="0.95" step="0.05" value="0.05" />
+    <span class="val" id="mincap-val">0.05</span>
+  </label>
+  <span class="stamp">F8 mockup · locked: 1:1 · white/amber · log font · rank-based alpha · density 1.5× · adaptive N · bottom strip · YOU rotation 25% (chaos) · CLAUDE rotation 0% (order)</span>
+</div>
+
+<div id="hint">asymmetric rotation = the pun. you side tilts (chaotic dev brain). claude side stays straight (assistant order). watch it.</div>
+
+<div id="stage">
+  <div id="artifact"
+       data-ratio="1x1"
+       data-layout="horizontal"
+       data-color="warmcool"
+       data-cardpos="floating">
+    <header>
+      <h1>OK Claude</h1>
+      <div class="meta" id="meta-line"></div>
+    </header>
+    <div class="halves">
+      <section class="half user">
+        <div class="side-label">YOU</div>
+        <div class="canvas-wrap"><canvas id="canvas-user"></canvas></div>
+        <div class="card" id="card-user"></div>
+      </section>
+      <section class="half claude">
+        <div class="side-label">CLAUDE</div>
+        <div class="canvas-wrap"><canvas id="canvas-claude"></canvas></div>
+        <div class="card" id="card-claude"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="./src/vendor/wordcloud2.js"></script>
+<script>
+const DATA = {
+  firstwordUser: [["ok",739],["wait",141],["y",130],["what",101],["1",92],["i",75],["let",75],["no",69],["A",66],["is",55],["so",52],["why",49],["Request",43],["commit",37],["continue",37],["how",37],["all",35],["B",34],["but",34],["now",32],["it",31],["for",29],["yes",28],["also",24],["you",24],["not",22],["sure",21],["doc",19],["C",17],["can",16],["claude",16],["we",16],["any",15],["base",15],["green",15],["should",15],["still",15],["the",15],["2",14],["this",14],["merge",13],["there",12],["wth",12],["are",11],["before",11],["drop",11],["first",11],["make",11],["mostly",11],["if",10],["one",10],["run",10],["your",10],["do",9],["next",9],["where",9],["and",8],["delete",8],["did",8],["keep",8],["both",7],["good",7],["in",7],["need",7],["session",7],["D",6],["add",6],["new",6],["remove",6],["super",6],["that",6],["when",6],["2026",5],["3",5],["Action",5],["Intake",5],["another",5],["check",5],["cloud",5],["commited",5]],
+  firstwordClaude: [["Now",387],["Committed",258],["Task",250],["Done",238],["All",167],["Plan",159],["Doc",140],["Right",127],["Yes",117],["Phase",116],["No",106],["Two",98],["Good",96],["Clean",92],["Both",84],["Found",71],["Commit",70],["Got",61],["P3",61],["Spec",61],["To",56],["D",54],["Let",54],["Update",52],["CONTEXT",48],["Verify",47],["Read",46],["You",44],["Add",43],["Edit",43],["I",41],["Audit",39],["Fair",38],["Need",38],["Pipeline",38],["Scope",38],["Confirmed",37],["Not",37],["B",36],["Dispatching",36],["Take",35],["Three",34],["Using",34],["Check",33],["Locked",32],["Branch",31],["Built",31],["Final",31],["Re",31],["Step",31],["Quick",30],["State",30],["Writing",30],["Sharp",29],["The",29],["Merged",28],["Run",28],["Executing",27],["Honest",27],["Build",26],["Real",26],["Drift",25],["Skill",24],["Stage",24],["Session",23],["Wave",23],["Logged",22],["Repo",22],["Review",22],["Caveman",21],["Self",21],["Starting",21],["Verified",21],["3",20],["Diagnosis",20],["Fail",20],["Frame",20],["Route",20],["Shipped",20],["Code",19]],
+  bodytokenUser: [["ok",832],["what",628],["we",626],["need",606],["no",567],["claude",465],["first",398],["right",382]],
+  bodytokenClaude: [["no",5600],["only",3210],["per",2690],["session",2288],["skill",2263],["commit",2247],["one",2140],["now",2128]],
+  meta: {"sessions":441,"messages":11629,"tokensIn":193498,"tokensOut":10276899,"dateRange":["2026-04-15T07:38:43.628Z","2026-05-15T10:39:12.713Z"]}
+};
+
+// Locked color pair — rgb tuples for per-word alpha gradient in canvas
+const ACCENT = {
+  user:   '255, 255, 255',  // white
+  claude: '217, 119, 87',   // #d97757 — Claude/Anthropic amber
+};
+
+const artifact = document.getElementById('artifact');
+const canvasUser = document.getElementById('canvas-user');
+const canvasClaude = document.getElementById('canvas-claude');
+const cardUser = document.getElementById('card-user');
+const cardClaude = document.getElementById('card-claude');
+const metaLine = document.getElementById('meta-line');
+
+function fmtTokens(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return String(n);
+}
+function renderMeta() {
+  const m = DATA.meta;
+  const total = m.tokensIn + m.tokensOut;
+  const range = m.dateRange ? `${m.dateRange[0].slice(0,10)} → ${m.dateRange[1].slice(0,10)}` : '';
+  metaLine.textContent = `${fmtTokens(total)} tokens · ${m.sessions} sessions · ${m.messages.toLocaleString()} msgs · ${range}`;
+}
+
+function sizeCanvas(canvas) {
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width = Math.max(1, Math.round(w * dpr));
+  canvas.height = Math.max(1, Math.round(h * dpr));
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  return { w, h, dpr };
+}
+
+function originPoint(canvas, side, mode) {
+  // Returns [x, y] in CANVAS pixel coords (post-DPR)
+  const W = canvas.width, H = canvas.height;
+  if (mode === 'center') return [W/2, H/2];
+  if (mode === 'edge') {
+    // Inner edge = side facing the divider
+    if (side === 'user')   return [W * 0.92, H/2]; // right edge of left half
+    if (side === 'claude') return [W * 0.08, H/2]; // left edge of right half
+  }
+  if (mode === 'outer') {
+    if (side === 'user')   return [W * 0.08, H/2];
+    if (side === 'claude') return [W * 0.92, H/2];
+  }
+  return [W/2, H/2];
+}
+
+function drawHalf(canvas, words, n, side, opts) {
+  const { dpr } = sizeCanvas(canvas);
+  const slice = words.slice(0, n);
+  if (slice.length === 0) return;
+  const max = slice[0][1];
+  const fontMin = opts.fontMin * dpr;
+  const fontMax = opts.fontMax * dpr;
+  const list = slice.map(([w, c]) => [w, c]);
+  const rgb = ACCENT[side];
+  const origin = originPoint(canvas, side, opts.origin);
+  const minCap = opts.minCap;
+  // Rank-based alpha normalization — uniform brightness map per side,
+  // independent of count distribution shape. Both sides feel equally
+  // bright; font (log curve, weight-based) carries the count signal.
+  const rankMap = new Map(slice.map(([w, c], i) => [w, i]));
+  const rankSpan = Math.max(1, slice.length - 1);
+
+  const curve = opts.curve;
+  function shape(r) {
+    if (curve === 'log') return Math.log1p(r * (Math.E - 1)); // 0..1 → 0..1
+    return r;
+  }
+
+  WordCloud(canvas, {
+    list,
+    gridSize: opts.gridSize,
+    weightFactor: function(weight) {
+      const ratio = weight / max;
+      return fontMin + shape(ratio) * (fontMax - fontMin);
+    },
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+    fontWeight: '800',
+    color: function(word, weight) {
+      const rank = rankMap.get(word) || 0;
+      const norm = 1 - rank / rankSpan; // rank 0 → 1.0, last → 0
+      const alpha = minCap + (1 - minCap) * norm;
+      return `rgba(${rgb}, ${alpha.toFixed(3)})`;
+    },
+    backgroundColor: 'transparent',
+    rotateRatio: opts.rotation,
+    rotationSteps: 2,
+    minRotation: -Math.PI / 8,
+    maxRotation: Math.PI / 8,
+    shrinkToFit: true,
+    drawOutOfBound: false,
+    origin,
+    shuffle: false,
+  });
+}
+
+function renderCard(container, words, n) {
+  container.innerHTML = '';
+  if (n === 0) return;
+  const slice = words.slice(0, n);
+  for (const [word, count] of slice) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const w = document.createElement('span'); w.className = 'w'; w.textContent = word;
+    const c = document.createElement('span'); c.className = 'c'; c.textContent = count.toLocaleString();
+    row.appendChild(w); row.appendChild(c);
+    container.appendChild(row);
+  }
+}
+
+// LOCKED params (hidden from UI per UX-lock decision)
+const LOCKED = {
+  ratio: '1x1',
+  layout: 'horizontal',
+  origin: 'edge',
+  cardN: 5,
+  gridRatio: 1.5,
+  curve: 'log',
+  cardpos: 'strip',
+  rotationUser: 0.25,    // chaos
+  rotationClaude: 0,     // order
+};
+
+let renderToken = 0;
+function applyAll() {
+  const minCap   = parseFloat(document.getElementById('mincap').value);
+  const fontMin  = parseInt(document.getElementById('fontmin').value, 10);
+  const fontMax  = parseInt(document.getElementById('fontmax').value, 10);
+  const gridSize = Math.max(2, Math.round(fontMin * LOCKED.gridRatio));
+  // Adaptive N: pass the full list; wordcloud2 drops what can't place
+  const cloudN   = Math.max(DATA.firstwordUser.length, DATA.firstwordClaude.length);
+
+  document.getElementById('mincap-val').textContent = minCap.toFixed(2);
+  document.getElementById('fontmin-val').textContent = fontMin;
+  document.getElementById('fontmax-val').textContent = fontMax;
+
+  artifact.dataset.ratio = LOCKED.ratio;
+  artifact.dataset.layout = LOCKED.layout;
+  artifact.dataset.cardpos = LOCKED.cardpos;
+
+  const baseOpts = {
+    gridSize, origin: LOCKED.origin,
+    fontMin, fontMax,
+    curve: LOCKED.curve, minCap,
+  };
+  const cardN = LOCKED.cardN;
+
+  // Re-render after reflow (next animation frame after CSS aspect-ratio settles)
+  const myToken = ++renderToken;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (myToken !== renderToken) return;
+    drawHalf(canvasUser, DATA.firstwordUser, cloudN, 'user', { ...baseOpts, rotation: LOCKED.rotationUser });
+    drawHalf(canvasClaude, DATA.firstwordClaude, cloudN, 'claude', { ...baseOpts, rotation: LOCKED.rotationClaude });
+  }));
+  renderCard(cardUser, DATA.bodytokenUser, cardN);
+  renderCard(cardClaude, DATA.bodytokenClaude, cardN);
+}
+
+for (const id of ['mincap','fontmin','fontmax']) {
+  const el = document.getElementById(id);
+  el.addEventListener('input', applyAll);
+  el.addEventListener('change', applyAll);
+}
+
+window.addEventListener('resize', () => {
+  // Re-render on viewport resize so canvas refits
+  applyAll();
+});
+
+renderMeta();
+// Wait for fonts/css/script to settle before first render
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => requestAnimationFrame(applyAll));
+});
+</script>
+
+</body>
+</html>
