@@ -89,4 +89,79 @@ describe("firstOpener", () => {
     expect(op!.surface.length).toBeGreaterThan(0);
     expect(op!.key).toBe(op!.surface.toLocaleLowerCase());
   });
+
+  // DEBT-003 rule 1: list-marker strip (digit/letter + . ) : + whitespace).
+  describe("list-marker strip", () => {
+    it("strips numbered list marker with period", () => {
+      expect(firstOpener("1. fix this")).toEqual({
+        key: "fix",
+        surface: "fix",
+      });
+    });
+
+    it("strips lettered list marker with paren", () => {
+      expect(firstOpener("A) approve")).toEqual({
+        key: "approve",
+        surface: "approve",
+      });
+    });
+
+    it("strips lettered list marker with colon", () => {
+      expect(firstOpener("B: lgtm")).toEqual({
+        key: "lgtm",
+        surface: "lgtm",
+      });
+    });
+
+    it("strips multi-digit list marker", () => {
+      expect(firstOpener("12. do thing")).toEqual({
+        key: "do",
+        surface: "do",
+      });
+    });
+
+    it("strips lowercase lettered marker", () => {
+      expect(firstOpener("a. one")).toEqual({
+        key: "one",
+        surface: "one",
+      });
+    });
+
+    it("tolerates leading whitespace before marker", () => {
+      expect(firstOpener("   1. fix")).toEqual({
+        key: "fix",
+        surface: "fix",
+      });
+    });
+
+    it("preserves digit when no list-marker shape (no punctuation)", () => {
+      expect(firstOpener("1 thing missing")).toEqual({
+        key: "1",
+        surface: "1",
+      });
+    });
+
+    it("preserves digit when decimal lacks trailing whitespace", () => {
+      // "1.5" — no whitespace after `.`, not a list marker.
+      // Segmenter may chunk "1.5" whole; assert no strip happened.
+      const op = firstOpener("1.5 things");
+      expect(op).not.toBeNull();
+      expect(op!.key.startsWith("1")).toBe(true);
+    });
+
+    it("does not strip when marker lacks trailing whitespace", () => {
+      // "1.fix" — no whitespace, treat as normal token.
+      const op = firstOpener("1.fix");
+      expect(op).not.toBeNull();
+      expect(op!.key).toBe("1");
+    });
+
+    it("only strips one marker (conservative)", () => {
+      // "1. 2. fix" → strip first only → "2. fix" → next wordlike is 2.
+      // Conservative: marker chains are rare; one strip kills 99% of noise.
+      const op = firstOpener("1. 2. fix");
+      expect(op).not.toBeNull();
+      expect(op!.key).toBe("2");
+    });
+  });
 });

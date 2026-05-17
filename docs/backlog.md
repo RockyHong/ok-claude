@@ -70,9 +70,9 @@ Ship math hostile. Real fixes either bust artifact size budget or re-break §NN#
 
 **Proposed fix paths (independent, can ship piecemeal):**
 
-1. **List-marker strip** — before opener scan, strip leading `^\s*(\d+|[A-Za-z])[.):]\s+` once. Conservative: only matches list-item shape (digit/letter + `.`/`)`/`:` + whitespace). Kills `1`/`A`/`B` from list openers; preserves `1` if it's the actual word ("1 thing missing").
+1. ~~**List-marker strip**~~ — shipped. `LIST_MARKER` regex in `src/openers.ts` strips `^\s*(\d+|[A-Za-z])[.):]\s+` once before scan.
 2. **Role-label whitelist** — if first wordlike segment matches `/^(Request|Response|User|Assistant|System|Prompt|Reply)$/i` followed immediately by `:`, skip and take next wordlike. Conservative — only known label words, prevents false positives.
 3. **Single-letter Latin drop** — opener key check applies `SHORT_LATIN_KEEP` (`y`/`n`/`k` admit) mirroring `tokenize.ts`. Drops `i`/`a`/etc. from openers.
 
-Each is a clear rule with a unit-test fixture. Mechanical, no LLM. Order: ship 1 first (highest-volume noise), then 2, then 3. Defer until after F8 baseline ships so we can measure delta against real cloud.
+Each is a clear rule with a unit-test fixture. Mechanical, no LLM. Remaining order: ship 2, then 3.
 
