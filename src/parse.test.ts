@@ -355,6 +355,37 @@ describe("parseJsonl", () => {
     expect(events.map((e) => e.text)).toEqual(["kept"]);
   });
 
+  it("drops synthetic [Request interrupted by user] user messages (ESC-during-tool-use stub)", () => {
+    const content = [
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: "[Request interrupted by user]" },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          role: "user",
+          content: "[Request interrupted by user for tool use]",
+        },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          role: "user",
+          content: [
+            { type: "text", text: "[Request interrupted by user]" },
+          ],
+        },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: "real user line" },
+      }),
+    ].join("\n");
+
+    expect(parseJsonl(content).map((e) => e.text)).toEqual(["real user line"]);
+  });
+
   it("drops lines flagged isVisibleInTranscriptOnly: true even without isCompactSummary (forward-compat)", () => {
     const content = [
       JSON.stringify({

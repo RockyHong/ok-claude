@@ -114,9 +114,16 @@ if (line.isApiErrorMessage === true) drop;    // <-- current gap
 
 // Content-level (extractText)
 keep only message.content blocks where block.type === "text";
+
+// Content-level synthetic-prose filter
+// User-role text injected by CC when user presses ESC during tool use.
+// No flag distinguishes from typed prose — exact whole-message match.
+const SYNTHETIC_USER_INTERRUPT =
+  /^\[Request interrupted by user(?: for tool use)?\]$/;
+if (role === "user" && SYNTHETIC_USER_INTERRUPT.test(text.trim())) drop;
 ```
 
-**Order matters:** type-whitelist first (cheapest — `user`/`assistant` keep, the other 10 observed types drop), then flag gates, then content extraction. Anything that survives → real human prose (or model reply to it).
+**Order matters:** type-whitelist first (cheapest — `user`/`assistant` keep, the other 10 observed types drop), then flag gates, then content extraction, then synthetic-prose match. Anything that survives → real human prose (or model reply to it).
 
 ## Other fields commonly seen
 

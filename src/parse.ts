@@ -59,6 +59,12 @@ function extractText(content: string | RawContentBlock[] | undefined): string {
   return out;
 }
 
+// Synthetic user message injected by Claude Code when user presses ESC during
+// tool use. Surfaces as a `user`-role `text` block — no flag distinguishes it
+// from typed prose. Two known forms; whole-message exact match.
+const SYNTHETIC_USER_INTERRUPT =
+  /^\[Request interrupted by user(?: for tool use)?\]$/;
+
 const HARNESS_TAGS = [
   "system-reminder",
   "command-name",
@@ -96,7 +102,9 @@ export function parseLine(line: string): LogEvent | null {
   const role = raw.message!.role as "user" | "assistant";
   const rawText = extractText(raw.message?.content);
   const text = stripHarnessTags(rawText);
-  if (!text.trim()) return null;
+  const stripped = text.trim();
+  if (!stripped) return null;
+  if (role === "user" && SYNTHETIC_USER_INTERRUPT.test(stripped)) return null;
 
   const event: LogEvent = { role, text };
   if (typeof raw.timestamp === "string") event.timestamp = raw.timestamp;
