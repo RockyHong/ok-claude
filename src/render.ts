@@ -187,6 +187,8 @@ export function renderHtml(input: RenderInput): string {
     width: 2px; background: var(--ink-1);
   }
   .half { position: relative; overflow: hidden; }
+  .half.user   { padding-right: 12px; }
+  .half.claude { padding-left: 12px; }
   .cv { width: 100%; height: 100%; display: block; }
 
   .footer {
