@@ -179,7 +179,6 @@ export function renderHtml(input: RenderInput): string {
     flex: 1 1 auto;
     margin-top: 14px;
     display: grid; grid-template-columns: 1fr 1fr;
-    column-gap: 32px;
     position: relative;
     overflow: hidden;
   }
@@ -189,6 +188,7 @@ export function renderHtml(input: RenderInput): string {
     transform: translateX(-50%);
   }
   .half { position: relative; overflow: hidden; }
+  .half.claude { padding-left: 24px; }
   .cv { width: 100%; height: 100%; display: block; }
 
   .footer {
