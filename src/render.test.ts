@@ -131,9 +131,9 @@ describe("renderHtml — footer + CTA", () => {
     expect(html).toContain("no llm");
     expect(html).toContain("441 sessions");
     expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*npx ok-claude/);
-    const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>[\s\S]*?<\/div>\s*<div[^>]*class="chrome"/);
-    expect(artifactMatch?.[0]).toContain("footer");
-    expect(artifactMatch?.[0]).toContain("cta");
+    const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<div[^>]*class="chrome"/);
+    expect(artifactMatch?.[1]).toContain("footer");
+    expect(artifactMatch?.[1]).toContain("cta");
   });
 });
 
@@ -152,26 +152,25 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
     expect(html).toMatch(/<div[^>]*id="artifact"[^>]*class="artifact"/);
   });
 
-  it("renders chrome block (.chrome) as a SIBLING after </div> of #artifact, not a child", () => {
+  it("wraps page in .page and stages #artifact inside .stage (capture-only sibling chrome)", () => {
     const html = renderHtml(input());
-    // chrome must come after artifact's closing </div> and before <script>
-    expect(html).toMatch(
-      /<\/div>\s*<div[^>]*class="chrome"[\s\S]*?<\/div>\s*<script/,
-    );
-    // and it must NOT appear inside the artifact
+    expect(html).toMatch(/<div[^>]*class="page"/);
+    expect(html).toMatch(/<div[^>]*class="stage"[^>]*>\s*<div[^>]*id="artifact"/);
+    // chrome sibling lives inside .page, beside .stage — not inside #artifact
+    expect(html).toMatch(/<\/div>\s*<div[^>]*class="chrome"/);
     const artifactInner = html.match(
-      /<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*class="chrome"/,
+      /<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/,
     )?.[1];
     expect(artifactInner).toBeTruthy();
     expect(artifactInner!).not.toContain('class="chrome"');
   });
 
-  it("renders three buttons with expected ids and chevron prefix", () => {
+  it("renders two action buttons (DOWNLOAD + COPY) with chevron prefix — no SHUFFLE", () => {
     const html = renderHtml(input());
     expect(html).toMatch(/<button[^>]*id="btn-download"[^>]*class="btn btn-primary"[\s\S]*?DOWNLOAD/);
     expect(html).toMatch(/<button[^>]*id="btn-copy"[^>]*class="btn"[\s\S]*?COPY/);
-    expect(html).toMatch(/<button[^>]*id="btn-shuffle"[^>]*class="btn"[\s\S]*?SHUFFLE/);
-    // chevron prefix on each
+    expect(html).not.toMatch(/id="btn-shuffle"/);
+    expect(html).not.toContain("SHUFFLE");
     const btnDownload = html.match(/<button[^>]*id="btn-download"[\s\S]*?<\/button>/)?.[0] ?? "";
     expect(btnDownload).toContain('class="chev"');
   });
@@ -188,27 +187,29 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
 
   it("inlines html-to-image vendor (no external src)", () => {
     const html = renderHtml(input());
-    // esbuild IIFE preamble or known internal identifier
     expect(html).toContain("var htmlToImage");
     expect(html).not.toMatch(/<script[^>]+src=[^>]*html-to-image/);
   });
 
-  it("boot script wires Fisher-Yates shuffle on closure entries (not mutating DATA)", () => {
+  it("no shuffle code remains (fisherYates / shuffleLayout dropped)", () => {
     const html = renderHtml(input());
-    // The handler should reshuffle local arrays then call renderAll with them.
-    expect(html).toContain("fisherYates");
-    // renderAll must take entries as args (so SHUFFLE / resize use the closure arrays)
-    expect(html).toMatch(/function\s+renderAll\s*\(\s*userEntries\s*,\s*claudeEntries\s*\)/);
+    expect(html).not.toContain("fisherYates");
+    expect(html).not.toContain("shuffleLayout");
   });
 
-  it("boot script wires download / copy / shuffle handlers", () => {
+  it("boot wires download + copy handlers and html-to-image capture", () => {
     const html = renderHtml(input());
     expect(html).toContain("getElementById('btn-download')");
     expect(html).toContain("getElementById('btn-copy')");
-    expect(html).toContain("getElementById('btn-shuffle')");
     expect(html).toContain("htmlToImage.toBlob");
     expect(html).toContain("navigator.clipboard.write");
     expect(html).toContain("new ClipboardItem");
+  });
+
+  it("capture overrides transform to none so scaled display does not shrink output", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/style:\s*\{\s*transform:\s*'none'/);
+    expect(html).toContain("pixelRatio: 2");
   });
 
   it("download filename pairs HTML timestamp", () => {
@@ -218,7 +219,6 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
         dateRange: null, timestamp: "2026-05-16-1234",
       },
     }));
-    // boot script reads DATA.meta.timestamp for the PNG name
     expect(html).toContain("DATA.meta.timestamp");
     expect(html).toContain("'.png'");
   });
@@ -228,5 +228,13 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
     expect(html).toContain("showToast");
     expect(html).toContain("classList.add('visible')");
     expect(html).toContain("classList.remove('visible')");
+  });
+
+  it("responsive — no-scroll body + scale var + portrait media query", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/html,\s*body\s*\{[^}]*overflow:\s*hidden/);
+    expect(html).toMatch(/transform:\s*scale\(var\(--s/);
+    expect(html).toMatch(/@media\s*\(max-aspect-ratio:\s*1\/1\)/);
+    expect(html).toContain("fitStage");
   });
 });

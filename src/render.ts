@@ -82,17 +82,30 @@ export function renderHtml(input: RenderInput): string {
     --ink-3: #3a3a35;
     --amber: #d97757;
     --rule: #f4f1ea;
+    --s: 1;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
     background: #050505;
     font-family: 'Archivo Narrow', sans-serif;
     color: var(--ink-1);
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 40px;
+  }
+  .page {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: row;
+    align-items: center; justify-content: center;
+    gap: 24px; padding: 24px;
+  }
+  .stage {
+    width: calc(1080px * var(--s));
+    height: calc(1080px * var(--s));
+    flex: 0 0 auto;
   }
   .artifact {
     width: 1080px; height: 1080px;
+    transform: scale(var(--s));
+    transform-origin: top left;
     background:
       radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.025), transparent 50%),
       radial-gradient(ellipse at 80% 90%, rgba(255,255,255,0.03), transparent 50%),
@@ -191,12 +204,14 @@ export function renderHtml(input: RenderInput): string {
     font-weight: 700;
   }
   .footer .cta .chev { color: var(--amber); margin-right: 4px; }
+
   .chrome {
+    flex: 0 0 auto;
     display: flex; flex-direction: column;
-    align-items: center; gap: 14px;
-    margin-top: 24px;
+    align-items: stretch; gap: 14px;
+    min-width: 160px;
   }
-  .actions { display: flex; gap: 28px; }
+  .actions { display: flex; flex-direction: column; gap: 12px; }
   .btn {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
@@ -209,6 +224,7 @@ export function renderHtml(input: RenderInput): string {
     padding: 10px 18px;
     cursor: pointer;
     transition: background 120ms ease;
+    white-space: nowrap;
   }
   .btn:hover { background: rgba(244, 241, 234, 0.06); }
   .btn .chev { margin-right: 6px; color: var(--ink-1); }
@@ -222,49 +238,57 @@ export function renderHtml(input: RenderInput): string {
     opacity: 0;
     transition: opacity 200ms ease;
     min-height: 1em;
+    text-align: center;
   }
   .toast.visible { opacity: 1; }
+
+  @media (max-aspect-ratio: 1/1) {
+    .page { flex-direction: column; }
+    .chrome { min-width: 0; align-items: center; }
+    .actions { flex-direction: row; gap: 16px; }
+  }
 </style>
 </head>
 <body>
-  <div id="artifact" class="artifact">
-    <div class="hdr-top">
-      OK. CLAUDE <span class="dash">&mdash;</span>
-      <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
-    </div>
-    <div class="hdr-bot">avg <span class="num">${perDayTxt}</span>/day.</div>
-    <div class="hdr-rule"></div>
+  <div class="page">
+    <div class="stage">
+      <div id="artifact" class="artifact">
+        <div class="hdr-top">
+          OK. CLAUDE <span class="dash">&mdash;</span>
+          <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
+        </div>
+        <div class="hdr-bot">avg <span class="num">${perDayTxt}</span>/day.</div>
+        <div class="hdr-rule"></div>
 
-    <div class="labels">
-      <div class="l">this is what you dump across <span class="n">${msgCountTxt}</span> messages:</div>
-      <div class="r">and this is what claude response:</div>
+        <div class="labels">
+          <div class="l">this is what you dump across <span class="n">${msgCountTxt}</span> messages:</div>
+          <div class="r">and this is what claude response:</div>
+        </div>
+
+        <div class="halves">
+          <div class="divider"></div>
+          <div class="half user"><canvas id="canvas-user" class="cv"></canvas></div>
+          <div class="half claude"><canvas id="canvas-claude" class="cv"></canvas></div>
+        </div>
+
+        <div class="footer">
+          <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions &middot; mechanical freq &middot; no llm</div>
+          <div class="cta"><span class="chev">&#9656;</span>npx ok-claude</div>
+        </div>
+      </div>
     </div>
 
-    <div class="halves">
-      <div class="divider"></div>
-      <div class="half user"><canvas id="canvas-user" class="cv"></canvas></div>
-      <div class="half claude"><canvas id="canvas-claude" class="cv"></canvas></div>
+    <div class="chrome">
+      <div class="actions">
+        <button type="button" id="btn-download" class="btn btn-primary">
+          <span class="chev">&#9656;</span>DOWNLOAD
+        </button>
+        <button type="button" id="btn-copy" class="btn" title="copy image to clipboard">
+          <span class="chev">&#9656;</span>COPY
+        </button>
+      </div>
+      <div class="toast" id="toast"></div>
     </div>
-
-    <div class="footer">
-      <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions &middot; mechanical freq &middot; no llm</div>
-      <div class="cta"><span class="chev">&#9656;</span>npx ok-claude</div>
-    </div>
-  </div>
-
-  <div class="chrome">
-    <div class="actions">
-      <button type="button" id="btn-download" class="btn btn-primary">
-        <span class="chev">&#9656;</span>DOWNLOAD
-      </button>
-      <button type="button" id="btn-copy" class="btn" title="copy image to clipboard">
-        <span class="chev">&#9656;</span>COPY
-      </button>
-      <button type="button" id="btn-shuffle" class="btn">
-        <span class="chev">&#9656;</span>SHUFFLE
-      </button>
-    </div>
-    <div class="toast" id="toast"></div>
   </div>
 
 <script>window.__DATA__ = ${dataJson};</script>
@@ -277,10 +301,6 @@ ${HTML_TO_IMAGE_JS}
 <script>
 (function boot() {
   var DATA = window.__DATA__ || { topUser: [], topClaude: [], meta: {} };
-
-  // Closure-held copies — SHUFFLE mutates these, not DATA.
-  var userEntries = (DATA.topUser || []).slice();
-  var claudeEntries = (DATA.topClaude || []).slice();
   var toastTimer = null;
 
   function setupCanvas(canvas) {
@@ -349,9 +369,9 @@ ${HTML_TO_IMAGE_JS}
   var INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
   function upper(s) { return s.toUpperCase(); }
 
-  function renderAll(userEntries, claudeEntries) {
+  function renderAll() {
     fitHeadline();
-    drawHalf('canvas-user', userEntries || [], {
+    drawHalf('canvas-user', DATA.topUser || [], {
       side: 'user',
       fontFamily: INTER_STACK,
       fontWeight: '800',
@@ -360,7 +380,7 @@ ${HTML_TO_IMAGE_JS}
       rotateRatio: 0.35,
       caseFn: upper,
     });
-    drawHalf('canvas-claude', claudeEntries || [], {
+    drawHalf('canvas-claude', DATA.topClaude || [], {
       side: 'claude',
       fontFamily: INTER_STACK,
       fontWeight: '800',
@@ -371,13 +391,21 @@ ${HTML_TO_IMAGE_JS}
     });
   }
 
-  function fisherYates(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  function fitStage() {
+    var chrome = document.querySelector('.chrome');
+    if (!chrome) return;
+    var landscape = window.innerWidth > window.innerHeight;
+    var padding = 24, gap = 24;
+    var availW, availH;
+    if (landscape) {
+      availW = window.innerWidth - padding * 2 - gap - chrome.offsetWidth;
+      availH = window.innerHeight - padding * 2;
+    } else {
+      availW = window.innerWidth - padding * 2;
+      availH = window.innerHeight - padding * 2 - gap - chrome.offsetHeight;
     }
-    return a;
+    var s = Math.max(0.05, Math.min(availW, availH) / 1080);
+    document.documentElement.style.setProperty('--s', String(s));
   }
 
   function showToast(msg) {
@@ -397,6 +425,7 @@ ${HTML_TO_IMAGE_JS}
       pixelRatio: 2,
       backgroundColor: '#0d0d0a',
       cacheBust: true,
+      style: { transform: 'none' },
     });
   }
 
@@ -436,13 +465,6 @@ ${HTML_TO_IMAGE_JS}
     });
   }
 
-  function shuffleLayout() {
-    userEntries = fisherYates(userEntries);
-    claudeEntries = fisherYates(claudeEntries);
-    renderAll(userEntries, claudeEntries);
-    showToast('reshuffled');
-  }
-
   function whenFontsReady(cb) {
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(cb);
@@ -452,25 +474,22 @@ ${HTML_TO_IMAGE_JS}
   }
 
   window.addEventListener('load', function () {
+    fitStage();
     whenFontsReady(function () {
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
-          renderAll(userEntries, claudeEntries);
+          renderAll();
         });
       });
     });
     var dl = document.getElementById('btn-download');
     var cp = document.getElementById('btn-copy');
-    var sf = document.getElementById('btn-shuffle');
     if (dl) dl.addEventListener('click', downloadPng);
     if (cp) cp.addEventListener('click', copyPng);
-    if (sf) sf.addEventListener('click', shuffleLayout);
   });
   window.addEventListener('resize', function () {
     clearTimeout(window.__rz);
-    window.__rz = setTimeout(function () {
-      renderAll(userEntries, claudeEntries);
-    }, 120);
+    window.__rz = setTimeout(fitStage, 60);
   });
 })();
 </script>
