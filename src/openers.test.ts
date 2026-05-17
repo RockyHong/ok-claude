@@ -164,4 +164,118 @@ describe("firstOpener", () => {
       expect(op!.key).toBe("2");
     });
   });
+
+  // DEBT-003 rule 2: role-label strip (Request/Response/User/Assistant/...).
+  describe("role-label strip", () => {
+    it("strips `Request:` prefix", () => {
+      expect(firstOpener("Request: fix this")).toEqual({
+        key: "fix",
+        surface: "fix",
+      });
+    });
+
+    it("strips `User:` prefix", () => {
+      expect(firstOpener("User: hello")).toEqual({
+        key: "hello",
+        surface: "hello",
+      });
+    });
+
+    it("strips `Assistant:` prefix", () => {
+      expect(firstOpener("Assistant: sure")).toEqual({
+        key: "sure",
+        surface: "sure",
+      });
+    });
+
+    it("strips role label case-insensitively", () => {
+      expect(firstOpener("REQUEST: do thing")).toEqual({
+        key: "do",
+        surface: "do",
+      });
+      expect(firstOpener("request: do thing")).toEqual({
+        key: "do",
+        surface: "do",
+      });
+    });
+
+    it("preserves role-label word when no colon follows", () => {
+      expect(firstOpener("Request the change")).toEqual({
+        key: "request",
+        surface: "Request",
+      });
+    });
+
+    it("preserves non-whitelisted label-shaped prefix", () => {
+      // "Foo:" not in whitelist; first wordlike is `Foo`.
+      const op = firstOpener("Foo: bar");
+      expect(op).not.toBeNull();
+      expect(op!.key).toBe("foo");
+    });
+
+    it("applies role-label strip after list-marker strip", () => {
+      // "1. Request: fix" → strip list marker → "Request: fix" → strip label → "fix"
+      expect(firstOpener("1. Request: fix")).toEqual({
+        key: "fix",
+        surface: "fix",
+      });
+    });
+  });
+
+  // DEBT-003 rule 3: single-letter Latin drop (mirror tokenize SHORT_LATIN_KEEP).
+  describe("single-letter Latin drop", () => {
+    it("drops bare `i` opener, takes next wordlike", () => {
+      expect(firstOpener("i need this")).toEqual({
+        key: "need",
+        surface: "need",
+      });
+    });
+
+    it("drops bare `a` opener", () => {
+      expect(firstOpener("a thing")).toEqual({
+        key: "thing",
+        surface: "thing",
+      });
+    });
+
+    it("keeps `y` (admit set)", () => {
+      expect(firstOpener("y go")).toEqual({
+        key: "y",
+        surface: "y",
+      });
+    });
+
+    it("keeps `n` (admit set)", () => {
+      expect(firstOpener("n stop")).toEqual({
+        key: "n",
+        surface: "n",
+      });
+    });
+
+    it("keeps `k` (admit set)", () => {
+      expect(firstOpener("k let me")).toEqual({
+        key: "k",
+        surface: "k",
+      });
+    });
+
+    it("keeps 2+ char Latin opener", () => {
+      expect(firstOpener("OK go")).toEqual({
+        key: "ok",
+        surface: "OK",
+      });
+    });
+
+    it("keeps single CJK char opener (not Latin)", () => {
+      const op = firstOpener("好 看看");
+      expect(op).not.toBeNull();
+      expect(op!.surface.length).toBeGreaterThan(0);
+      expect(op!.key).toBe(op!.surface.toLocaleLowerCase());
+    });
+
+    it("returns null when all candidates are dropped single-letter Latin", () => {
+      // "i a x" — all single Latin not in keep set → no valid opener.
+      expect(firstOpener("i a x")).toBeNull();
+    });
+  });
 });
