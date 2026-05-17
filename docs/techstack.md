@@ -18,11 +18,11 @@ None. CLI tool — no web framework. TypeScript for source.
 
 - **Runtime**
   - `open` — auto-launch default browser on result HTML
-- **Embedded in output HTML** (vendored inline — no CDN for JS, offline-safe for logic)
+- **Embedded in output HTML** (vendored inline — no CDN, fully self-contained at view time)
   - `wordcloud2.js` — canvas wordcloud renderer
   - `html-to-image` — client-side PNG export from DOM
+  - 4 woff2 fonts (Anton, Archivo Narrow, Inter, JetBrains Mono — latin subset, base64 `@font-face`)
   - Pure CSS (vendored inline) — no UI framework
-- **External in output HTML — Google Fonts `<link>`.** One `<link href="https://fonts.googleapis.com/...">` pulling Anton + Archivo Narrow + Inter + JetBrains Mono. Offline render falls back to system fonts (degraded look). Resolution path tracked in `docs/backlog.md`.
 - **Dev**
   - `typescript` — source language
   - `tsx` — dev runner (`pnpm dev`)
@@ -57,7 +57,7 @@ Output: `~/Downloads/ok-claude-result-{YYYY-MM-DD-HHMM}.html` (cwd fallback if `
 
 - **Pipeline is one-way.** `discover → parse → denoise → tokenize → aggregate → render → write`. No back-edges. New transforms slot between two existing stages; never reach upstream.
 - **Pure-logic modules stay pure.** `parse`, `denoise`, `tokenize`, `aggregate`, `render` take string / array input → string / array / Map output. No I/O, no `process.*`, no `fs`. Side effects live in `discover`, `pipeline`, `cli`.
-- **Vendor library = inlined, never fetched.** Browser libraries in `src/vendor/` are committed verbatim with source URL + version + license header. `render.ts` reads them as strings at module load and interpolates into the emitted HTML. Emitted HTML rule: no `<script src=...>`, no `fetch`. Single exception: Google Fonts `<link>` (see Key Dependencies). tsup `onSuccess` mirrors `src/vendor/` to `dist/vendor/` so the runtime path resolves in both source and bundle.
+- **Vendor assets = inlined, never fetched.** Browser libraries and fonts in `src/vendor/` are committed verbatim with source URL + version + license. `render.ts` reads JS as strings and woff2 as base64 at module load, then interpolates into the emitted HTML. Emitted HTML rule: no `<script src=...>`, no `<link href=https://...>`, no `fetch`. tsup `onSuccess` mirrors `src/vendor/` (including `src/vendor/fonts/`) to `dist/vendor/` so the runtime path resolves in both source and bundle.
 - **`</script>` escape on user-derived strings.** `render.ts` `safeJson` rewrites `</script` → `<\/script` before injecting into `<script>` blocks; without this, a hostile token could break out of the JSON island.
 - **Tolerant parse, strict types.** External JSONL has no schema guarantee — `parse.ts` swallows bad lines silently. Internal types (`LogEvent`, `RenderMeta`) are strict; pipeline assumes them post-parse.
 - **One output file per run.** CLI emits `ok-claude-result-{YYYY-MM-DD-HHMM}.html` to `~/Downloads/` (cross-platform via `os.homedir() + "/Downloads"`); falls back to invocation cwd if Downloads missing. No temp files, no caches, no follow-up writes. Same-minute re-run overwrites; later-minute re-run creates a new file.

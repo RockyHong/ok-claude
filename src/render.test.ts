@@ -38,6 +38,23 @@ describe("renderHtml — self-containment", () => {
     expect(html).not.toContain("unpkg.com");
   });
 
+  it("inlines all 4 fonts as base64 woff2 data URIs — no Google Fonts network", () => {
+    const html = renderHtml(input());
+    expect(html).not.toContain("fonts.googleapis.com");
+    expect(html).not.toContain("fonts.gstatic.com");
+    const dataUriCount = (html.match(/data:font\/woff2;base64,/g) ?? []).length;
+    expect(dataUriCount).toBe(4);
+    expect(html).toMatch(/@font-face[\s\S]*?font-family:\s*'Anton'/);
+    expect(html).toMatch(/@font-face[\s\S]*?font-family:\s*'Archivo Narrow'/);
+    expect(html).toMatch(/@font-face[\s\S]*?font-family:\s*'Inter'/);
+    expect(html).toMatch(/@font-face[\s\S]*?font-family:\s*'JetBrains Mono'/);
+  });
+
+  it("rendered HTML stays under 2 MB (font subset sanity)", () => {
+    const html = renderHtml(input());
+    expect(html.length).toBeLessThan(2_000_000);
+  });
+
   it("escapes </script> in user-derived strings", () => {
     const html = renderHtml(
       input({ topUser: [["</script><script>alert(1)</script>", 1]] }),

@@ -5,14 +5,18 @@
 //   - .chrome: DOWNLOAD + COPY action buttons + toast
 //   - Responsive scale: fitStage() computes --s on load + debounced resize
 //
-// Type tiers (Google Fonts):
+// Type tiers (vendored base64 woff2, latin subset):
 //   - UI: Anton (headline), Archivo Narrow (sub/labels/footer), JetBrains Mono (CTA)
 //   - Cloud: Inter 800 (canvas workhorse)
+//   Archivo Narrow / Inter / JetBrains Mono are variable fonts — one file
+//   covers the weights consumed via CSS font-weight (wght axis).
+//   Refresh policy: src/vendor/README.md.
 // Warm-ink palette in :root (--paper / --ink-{1,2,3} / --amber / --rule).
 //
-// Vendored libs read once at module top:
-//   - wordcloud2.js   → window.WordCloud (canvas renderer)
+// Vendored assets read once at module top:
+//   - wordcloud2.js    → window.WordCloud (canvas renderer)
 //   - html-to-image.js → window.htmlToImage (PNG export via unscaled clone)
+//   - fonts/*.woff2    → @font-face data: URIs (self-contained, no network)
 //
 // Cross-island safety: safeJson() rewrites </script before injection.
 // Boot order: whenFontsReady() → double-rAF first paint.
@@ -30,6 +34,43 @@ const HTML_TO_IMAGE_JS = readFileSync(
   new URL("./vendor/html-to-image.js", import.meta.url),
   "utf8",
 );
+
+function fontB64(name: string): string {
+  return readFileSync(
+    new URL(`./vendor/fonts/${name}`, import.meta.url),
+  ).toString("base64");
+}
+
+const FONT_CSS = `
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(data:font/woff2;base64,${fontB64("anton-400.woff2")}) format('woff2');
+}
+@font-face {
+  font-family: 'Archivo Narrow';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(data:font/woff2;base64,${fontB64("archivo-narrow.woff2")}) format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(data:font/woff2;base64,${fontB64("inter.woff2")}) format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(data:font/woff2;base64,${fontB64("jetbrains-mono.woff2")}) format('woff2');
+}
+`;
 
 export type RenderInput = {
   topUser: Array<[string, number]>;
@@ -92,10 +133,8 @@ export function renderHtml(input: RenderInput): string {
 <head>
 <meta charset="utf-8" />
 <title>OK Claude</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@400;500;700&family=Inter:wght@700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+${FONT_CSS}
   :root {
     --paper: #0d0d0a;
     --ink-1: #f4f1ea;

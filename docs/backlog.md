@@ -16,22 +16,30 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
-### GAP-015 — Google Fonts external dependency in tabloid lock breaks § NN#3 self-contained intent
+### GAP-016 — CJK font fallback inconsistent across OS; PNG bakes per-machine face
 
-**Area:** `src/render.ts` head — `<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow&family=Inter&family=JetBrains+Mono...">`. Required by DEBT-005 tabloid lock (UI tier = Anton headline + Archivo Narrow body + JetBrains Mono CTA; Cloud tier = Inter 800 workhorse).
+**Area:** `src/render.ts` — `INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif'`. Cloud canvas font stack has no CJK family.
 
-**Symptom:** Output HTML pulls four font families from `fonts.googleapis.com` at render time. Violates § Non-Negotiable #3 ("One shot, one file. Run → single self-contained HTML auto-opens"). Offline render falls back to system fonts (Archivo Narrow / Anton / Inter / JetBrains Mono all absent on stock Win/Mac/Linux installs without browser font cache) → degraded look (system-ui everywhere, no display face, no monospace personality, headline auto-fit math thrown by different metrics).
+**Symptom:** Inter ships Latin only. Browser falls through stack to `system-ui` for CJK glyphs:
+- macOS → PingFang SC/TC
+- Windows → Microsoft YaHei / Yu Gothic
+- Linux → Noto Sans CJK if installed, else tofu (□□□)
 
-**Why it matters:** Self-contained = the share-loop primitive. User runs `npx ok-claude` on plane / VPN-blocked corp net / behind firewall → opens rendered HTML → sees system-font fallback → loses tabloid grammar. Compounds for F5 PNG export: `html-to-image` snapshot before fonts download = wrong metrics baked into PNG (already mitigated by `whenFontsReady()` boot gate, but only if fonts EVER load).
+PNG export (`html-to-image`) rasterizes whatever the user's machine rendered → screenshots inconsistent across share network. Two devs with CJK sessions get visually different artifacts. Linux without Noto = unreadable tofu PNG.
 
-**Proposed fix paths:**
+**Why it matters:** Silent §NN#3 (self-contained) violation for CJK users. Brand consistency on social share = degraded — same `npx ok-claude` command produces different-looking PNGs depending on OS. The pun/meme energy depends on visual consistency.
 
-1. **Inline base64 woff2 in CSS** — embed all 4 family weights as `@font-face { src: url('data:font/woff2;base64,...') }`. ~150-300 KB per font × 4 = adds ~600 KB-1.2 MB to output HTML. True self-containment. Bundle step needs woff2 source tree + base64 encode at build time. Hits tsup build pipeline.
-2. **Subset fonts to ASCII + common symbols** — base64 subset reduces per-font weight ~80%. ~30-60 KB × 4 = ~150-250 KB total addition. Use `glyphhanger` or `fonttools subset` at build time. Tradeoff: locks character set; CJK breaks (only relevant for Cloud tier — Latin-only fonts; CJK in cloud falls back to system CJK which is fine).
-3. **Drop Google Fonts; use system-stack only** — abandon Anton (`'Impact', 'Haettenschweiler', 'Franklin Gothic Bold', sans-serif`-ish stack), Archivo Narrow (`'Arial Narrow', sans-serif`), Inter (`system-ui, -apple-system, ...`), JetBrains Mono (`ui-monospace, ...`). Loses tabloid display-face personality but eliminates dep. Reframes design lock.
-4. **Ship as-is; accept online dep** — document the trade-off, add `<noscript>` fallback note, move on. Pragmatic; matches "npm distribution" reality (user already needs `npx` = network).
+**Why deferred:**
 
-Pick on next session; decision likely influenced by F5 (`png-export`) timing — PNG export is canonical artifact; PNG fonts get baked at render time so online-fetch latency = export latency, OR PNG ships system-fallback if fonts hadn't loaded.
+Ship math hostile. Real fixes either bust artifact size budget or re-break §NN#3:
+
+1. **Embed Noto Sans CJK** — even subset is ~10MB+ (CJK char count ~20k unicode block). Kills artifact size budget; HTML balloons past download-friendly. Latin subset is ~200KB; CJK is 50× that.
+2. **Runtime-subset on observed CJK chars** — extract CJK chars from user data → fetch subset from CDN at render time. Breaks §NN#3 (online dep returns); also adds offline-fail path.
+3. **Detect CJK presence; conditionally fetch** — same online dep problem; conditional logic adds complexity.
+4. **Ship single font weight, single script** — pick CJK locale (Japanese OR Simplified Chinese OR Traditional Chinese, not all) → still ~3-5MB per locale. Hostile to CJK-mixed sessions.
+5. **Accept OS fallback, document as known gap** — current behavior. Brand inconsistency for CJK users; functional for macOS/Windows; tofu risk on Linux.
+
+**Pick on signal:** revisit when a CJK user files actual complaint about visual inconsistency or tofu. Until then, path 5 (accept). Most Claude Code users on macOS/Windows get readable CJK; Linux tofu is rare edge.
 
 ### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
 

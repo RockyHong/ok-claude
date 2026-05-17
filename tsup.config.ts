@@ -15,7 +15,7 @@ export default defineConfig({
   shims: false,
   banner: { js: "#!/usr/bin/env node" },
   async onSuccess() {
-    await mkdir(join("dist", "vendor"), { recursive: true });
+    await mkdir(join("dist", "vendor", "fonts"), { recursive: true });
     await cp(
       join("src", "vendor", "wordcloud2.js"),
       join("dist", "vendor", "wordcloud2.js"),
@@ -24,6 +24,17 @@ export default defineConfig({
       join("src", "vendor", "html-to-image.js"),
       join("dist", "vendor", "html-to-image.js"),
     );
+    for (const f of [
+      "anton-400.woff2",
+      "archivo-narrow.woff2",
+      "inter.woff2",
+      "jetbrains-mono.woff2",
+    ]) {
+      await cp(
+        join("src", "vendor", "fonts", f),
+        join("dist", "vendor", "fonts", f),
+      );
+    }
     if (process.platform !== "win32") {
       await chmod(join("dist", "cli.js"), 0o755);
     }
