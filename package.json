@@ -1,9 +1,17 @@
 {
   "name": "ok-claude",
   "version": "0.1.0",
-  "description": "Wordcloud of your Claude Code sessions — see how often you really said 'ok claude'. npx-distributed, self-contained HTML output.",
+  "description": "Wordcloud of your Claude Code sessions. Your top openers — ok, y, go, ya know.",
   "author": "Rocky Hong",
   "keywords": ["claude-code", "wordcloud", "cli", "anthropic", "session-stats"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RockyHong/ok-claude.git"
+  },
+  "homepage": "https://github.com/RockyHong/ok-claude#readme",
+  "bugs": {
+    "url": "https://github.com/RockyHong/ok-claude/issues"
+  },
   "type": "module",
   "bin": {
     "ok-claude": "dist/cli.js"

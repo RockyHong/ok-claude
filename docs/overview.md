@@ -55,7 +55,6 @@ Active development. v1 surface shipped — dual-half opener wordcloud, streaming
 
 | ID | Slug                  | Title                                              | Rationale                                                                |
 | -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F6 | `npm-publish`         | Publish to npm registry, README, `npx` smoke       | Ships v1. Closes the distribution loop.                                  |
 | F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud             | Second surface inside the same two-tab frame.                            |
 
 ## Module Index
