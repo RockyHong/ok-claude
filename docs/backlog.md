@@ -16,21 +16,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
-### GAP-016 — CJK font fallback: Linux-bare-tofu remains; per-OS face still bakes into PNG
-
-**Area:** `src/render.ts` — `INTER_STACK` cloud canvas font stack.
-
-**Current state (path 5+ landed):** stack now appends explicit CJK family names — `PingFang TC/SC`, `Hiragino Sans`, `Microsoft JhengHei/YaHei`, `Yu Gothic`, `Meiryo`, `Noto Sans CJK TC/JP` — before generic `system-ui`. Mac/Windows + Linux-with-Noto = readable CJK glyphs. Pinned in `render.test.ts § CJK content + font stack`.
-
-**Residual gaps:**
-
-1. **Linux-bare tofu** — distro without any Noto CJK installed still renders □□□. Rare edge (CJK typer typically has a CJK font installed).
-2. **Per-OS face still bakes into PNG** — Mac PingFang vs Win JhengHei vs Linux Noto = three visually different shared PNGs from the same `npx ok-claude` run. Brand inconsistency on share network persists; only fully fixed by embedding a CJK family.
-
-**Why still deferred:** embed paths (Noto subset ~10MB+ per locale, online subset breaks §NN#3) remain ship-math-hostile. Path 5+ closes the readability gap on 95% of installs at zero artifact cost — the meme-energy threshold.
-
-**Pick on signal:** revisit only on actual CJK-user complaint about (a) Linux tofu in PNG or (b) cross-OS visual mismatch hurting share.
-
 ### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
 
 **Area:** `src/pipeline.ts` body-token tokenize-and-fold + per-side body-token `topN` call; `src/render.ts` panel slot + `paintPanel` (whatever F8 wire names it); `src/tokenize.ts` body-token consumer paths.
