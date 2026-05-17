@@ -2,6 +2,8 @@
   "name": "ok-claude",
   "version": "0.1.0",
   "description": "Wordcloud of your Claude Code sessions — see how often you really said 'ok claude'. npx-distributed, self-contained HTML output.",
+  "author": "Rocky Hong",
+  "keywords": ["claude-code", "wordcloud", "cli", "anthropic", "session-stats"],
   "type": "module",
   "bin": {
     "ok-claude": "dist/cli.js"
@@ -10,6 +12,7 @@
     "dist"
   ],
   "scripts": {
+    "prepublishOnly": "pnpm build && pnpm test",
     "dev": "tsx src/cli.ts",
     "build": "tsup",
     "test": "vitest run",
