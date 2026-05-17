@@ -440,7 +440,10 @@ ${HTML_TO_IMAGE_JS}
     }
   }
 
-  var INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+  // CJK families appended after Inter so canvas font fallback walks to native CJK face per OS
+  // before generic system-ui. Mac → PingFang / Hiragino; Win → Microsoft JhengHei/YaHei, Yu Gothic;
+  // Linux → Noto Sans CJK (when installed). Linux-bare = tofu (accepted edge — see docs/backlog.md GAP-016).
+  var INTER_STACK = '"Inter", "PingFang TC", "PingFang SC", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Microsoft JhengHei", "Microsoft YaHei", "Yu Gothic", "Meiryo", "Noto Sans CJK TC", "Noto Sans CJK JP", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
   function upper(s) { return s.toUpperCase(); }
 
   function renderAll() {

@@ -186,6 +186,52 @@ describe("renderHtml — footer CTA", () => {
   });
 });
 
+describe("renderHtml — CJK content + font stack", () => {
+  const cjkUser: [string, number][] = [
+    ["好的", 142], ["幫我", 98], ["可以", 67], ["請", 54],
+    ["なるほど", 41], ["お願い", 33], ["ありがとう", 22],
+    ["ok", 38], ["yeah", 18],
+  ];
+  const cjkClaude: [string, number][] = [
+    ["我", 201], ["這個", 134], ["如果", 76],
+    ["はい", 88], ["こちら", 52], ["こちらの", 41],
+  ];
+
+  it("inlines CJK opener strings (zh-TW + JP) untouched in DATA payload", () => {
+    const html = renderHtml(input({ topUser: cjkUser, topClaude: cjkClaude }));
+    expect(html).toContain('"好的"');
+    expect(html).toContain('"幫我"');
+    expect(html).toContain('"なるほど"');
+    expect(html).toContain('"お願い"');
+    expect(html).toContain('"這個"');
+    expect(html).toContain('"はい"');
+  });
+
+  it("cloud font stack covers CJK families per OS (Mac / Win / Linux)", () => {
+    const html = renderHtml(input());
+    // macOS
+    expect(html).toContain('"PingFang TC"');
+    expect(html).toContain('"PingFang SC"');
+    expect(html).toContain('"Hiragino Sans"');
+    // Windows
+    expect(html).toContain('"Microsoft JhengHei"');
+    expect(html).toContain('"Microsoft YaHei"');
+    expect(html).toContain('"Yu Gothic"');
+    // Linux
+    expect(html).toContain('"Noto Sans CJK TC"');
+    expect(html).toContain('"Noto Sans CJK JP"');
+  });
+
+  it("Inter precedes CJK families (Latin glyphs hit Inter first)", () => {
+    const html = renderHtml(input());
+    const stackMatch = html.match(/var INTER_STACK = '([^']+)'/);
+    expect(stackMatch).toBeTruthy();
+    const stack = stackMatch![1];
+    expect(stack.indexOf('"Inter"')).toBeLessThan(stack.indexOf('"PingFang TC"'));
+    expect(stack.indexOf('"PingFang TC"')).toBeLessThan(stack.indexOf("system-ui"));
+  });
+});
+
 describe("renderHtml — empty state per side", () => {
   it("still emits both canvases even when one side is empty", () => {
     const html = renderHtml(input({ topClaude: [] }));

@@ -16,30 +16,20 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 ## Open
 
-### GAP-016 — CJK font fallback inconsistent across OS; PNG bakes per-machine face
+### GAP-016 — CJK font fallback: Linux-bare-tofu remains; per-OS face still bakes into PNG
 
-**Area:** `src/render.ts` — `INTER_STACK = '"Inter", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif'`. Cloud canvas font stack has no CJK family.
+**Area:** `src/render.ts` — `INTER_STACK` cloud canvas font stack.
 
-**Symptom:** Inter ships Latin only. Browser falls through stack to `system-ui` for CJK glyphs:
-- macOS → PingFang SC/TC
-- Windows → Microsoft YaHei / Yu Gothic
-- Linux → Noto Sans CJK if installed, else tofu (□□□)
+**Current state (path 5+ landed):** stack now appends explicit CJK family names — `PingFang TC/SC`, `Hiragino Sans`, `Microsoft JhengHei/YaHei`, `Yu Gothic`, `Meiryo`, `Noto Sans CJK TC/JP` — before generic `system-ui`. Mac/Windows + Linux-with-Noto = readable CJK glyphs. Pinned in `render.test.ts § CJK content + font stack`.
 
-PNG export (`html-to-image`) rasterizes whatever the user's machine rendered → screenshots inconsistent across share network. Two devs with CJK sessions get visually different artifacts. Linux without Noto = unreadable tofu PNG.
+**Residual gaps:**
 
-**Why it matters:** Silent §NN#3 (self-contained) violation for CJK users. Brand consistency on social share = degraded — same `npx ok-claude` command produces different-looking PNGs depending on OS. The pun/meme energy depends on visual consistency.
+1. **Linux-bare tofu** — distro without any Noto CJK installed still renders □□□. Rare edge (CJK typer typically has a CJK font installed).
+2. **Per-OS face still bakes into PNG** — Mac PingFang vs Win JhengHei vs Linux Noto = three visually different shared PNGs from the same `npx ok-claude` run. Brand inconsistency on share network persists; only fully fixed by embedding a CJK family.
 
-**Why deferred:**
+**Why still deferred:** embed paths (Noto subset ~10MB+ per locale, online subset breaks §NN#3) remain ship-math-hostile. Path 5+ closes the readability gap on 95% of installs at zero artifact cost — the meme-energy threshold.
 
-Ship math hostile. Real fixes either bust artifact size budget or re-break §NN#3:
-
-1. **Embed Noto Sans CJK** — even subset is ~10MB+ (CJK char count ~20k unicode block). Kills artifact size budget; HTML balloons past download-friendly. Latin subset is ~200KB; CJK is 50× that.
-2. **Runtime-subset on observed CJK chars** — extract CJK chars from user data → fetch subset from CDN at render time. Breaks §NN#3 (online dep returns); also adds offline-fail path.
-3. **Detect CJK presence; conditionally fetch** — same online dep problem; conditional logic adds complexity.
-4. **Ship single font weight, single script** — pick CJK locale (Japanese OR Simplified Chinese OR Traditional Chinese, not all) → still ~3-5MB per locale. Hostile to CJK-mixed sessions.
-5. **Accept OS fallback, document as known gap** — current behavior. Brand inconsistency for CJK users; functional for macOS/Windows; tofu risk on Linux.
-
-**Pick on signal:** revisit when a CJK user files actual complaint about visual inconsistency or tofu. Until then, path 5 (accept). Most Claude Code users on macOS/Windows get readable CJK; Linux tofu is rare edge.
+**Pick on signal:** revisit only on actual CJK-user complaint about (a) Linux tofu in PNG or (b) cross-OS visual mismatch hurting share.
 
 ### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
 
