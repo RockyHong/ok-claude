@@ -12,6 +12,7 @@ function input(over: Partial<RenderInput> = {}): RenderInput {
       tokensOut: over.meta?.tokensOut ?? 0,
       dateRange: over.meta?.dateRange ?? null,
       timestamp: over.meta?.timestamp ?? "2026-05-16-1234",
+      username: over.meta?.username ?? "tester",
     },
   };
 }
@@ -54,7 +55,7 @@ describe("renderHtml — tabloid layout", () => {
   });
 
   it("renders labels row with amber message-count accent on user side", () => {
-    const html = renderHtml(input({ meta: { sessions: 1, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234", username: "tester" } }));
     expect(html).toMatch(/<div[^>]*class="labels"/);
     expect(html).toContain("this is what you dump across");
     expect(html).toContain("messages:");
@@ -84,6 +85,34 @@ describe("renderHtml — tabloid layout", () => {
   });
 });
 
+describe("renderHtml — username handle", () => {
+  it("renders @{username} handle in hdr-bot prefixed before the avg/day stat", () => {
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 4, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234", username: "rocky" } }));
+    expect(html).toMatch(/<div[^>]*class="hdr-bot"[^>]*>[\s\S]*?<span[^>]*class="handle"[^>]*>@rocky<\/span>[\s\S]*?avg[\s\S]*?\/day/);
+  });
+
+  it("escapes a hostile username", () => {
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 4, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234", username: "<script>x</script>" } }));
+    expect(html).not.toMatch(/@<script>x<\/script>/);
+    expect(html).toContain("@&lt;script&gt;x&lt;/script&gt;");
+  });
+
+  it("falls back to '@you' when username is empty", () => {
+    const html = renderHtml(input({ meta: { sessions: 1, messages: 4, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234", username: "" } }));
+    expect(html).toContain("@you");
+  });
+});
+
+describe("renderHtml — creator byline", () => {
+  it("renders subtle 'by rocky hong' byline inside footer of #artifact (travels with PNG)", () => {
+    const html = renderHtml(input());
+    expect(html).toMatch(/<div[^>]*class="byline"[^>]*>\s*by rocky hong\s*<\/div>/);
+    const artifactInner = html.match(/<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<div[^>]*class="chrome"/)?.[1];
+    expect(artifactInner).toBeTruthy();
+    expect(artifactInner!).toContain("by rocky hong");
+  });
+});
+
 describe("renderHtml — tabloid header", () => {
   it("emits hdr-top brand wordmark + burn-fact + hdr-bot per-day sub-line with amber num accents", () => {
     const html = renderHtml(
@@ -95,6 +124,7 @@ describe("renderHtml — tabloid header", () => {
           tokensOut: 10_276_899,
           dateRange: ["2026-04-15T00:00:00Z", "2026-05-15T00:00:00Z"],
           timestamp: "2026-05-16-1234",
+          username: "tester",
         },
       }),
     );
@@ -124,7 +154,7 @@ describe("renderHtml — tabloid header", () => {
 
 describe("renderHtml — footer CTA", () => {
   it("renders single-line CTA inside .artifact — 'npx ok-claude # confess yours' (travels with PNG export)", () => {
-    const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
+    const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234", username: "tester" } }));
     expect(html).toMatch(/<div[^>]*class="footer"/);
     // Old masthead bits dropped — footer is CTA-only.
     expect(html).not.toContain("vol. you");
@@ -218,7 +248,7 @@ describe("renderHtml — F5 chrome row + html-to-image", () => {
     const html = renderHtml(input({
       meta: {
         sessions: 1, messages: 1, tokensIn: 0, tokensOut: 0,
-        dateRange: null, timestamp: "2026-05-16-1234",
+        dateRange: null, timestamp: "2026-05-16-1234", username: "tester",
       },
     }));
     expect(html).toContain("DATA.meta.timestamp");

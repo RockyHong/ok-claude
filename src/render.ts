@@ -20,6 +20,7 @@ export type RenderInput = {
     tokensOut: number;
     dateRange: [string, string] | null;
     timestamp: string;
+    username: string;
   };
 };
 
@@ -63,6 +64,7 @@ export function renderHtml(input: RenderInput): string {
   const daysTxt = escapeHtml(`${days} days`);
   const perDayTxt = escapeHtml(`${fmtTokens(perDay)} tokens`);
   const msgCountTxt = escapeHtml(input.meta.messages.toLocaleString("en-US"));
+  const usernameTxt = escapeHtml(input.meta.username || "you");
 
   return `<!doctype html>
 <html lang="en">
@@ -142,6 +144,13 @@ export function renderHtml(input: RenderInput): string {
     border-bottom: 2px solid var(--ink-1);
     padding-bottom: 1px;
   }
+  .hdr-bot .handle {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-1);
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+  }
   .hdr-rule {
     margin-top: 24px;
     height: 4px; background: var(--ink-1);
@@ -182,11 +191,15 @@ export function renderHtml(input: RenderInput): string {
 
   .footer {
     margin-top: 14px;
-    display: flex; justify-content: center; align-items: baseline;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
     border-top: 1px solid var(--ink-1);
     padding-top: 12px;
   }
   .footer .cta {
+    grid-column: 2;
+    justify-self: center;
     font-family: 'JetBrains Mono', monospace;
     font-size: 16px;
     color: var(--ink-1);
@@ -194,6 +207,17 @@ export function renderHtml(input: RenderInput): string {
   }
   .footer .cta .chev { color: var(--amber); margin-right: 4px; }
   .footer .cta .cmt { color: var(--ink-2); font-weight: 400; }
+  .footer .byline {
+    grid-column: 3;
+    justify-self: end;
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    white-space: nowrap;
+  }
 
   .chrome {
     flex: 0 0 auto;
@@ -247,7 +271,7 @@ export function renderHtml(input: RenderInput): string {
           OK. CLAUDE <span class="dash">&mdash;</span>
           <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
         </div>
-        <div class="hdr-bot">avg <span class="num">${perDayTxt}</span>/day.</div>
+        <div class="hdr-bot"><span class="handle">@${usernameTxt}</span> &middot; avg <span class="num">${perDayTxt}</span>/day.</div>
         <div class="hdr-rule"></div>
 
         <div class="labels">
@@ -263,6 +287,7 @@ export function renderHtml(input: RenderInput): string {
 
         <div class="footer">
           <div class="cta"><span class="chev">&#9656;</span>npx ok-claude<span class="cmt"> # confess yours</span></div>
+          <div class="byline">by rocky hong</div>
         </div>
       </div>
     </div>

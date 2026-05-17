@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { statSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, userInfo } from "node:os";
 import { join, resolve } from "node:path";
 
 import { discoverLogs, logsRoot } from "./discover.js";
@@ -23,6 +23,15 @@ function buildStamp(now: Date = new Date()): string {
 
 function outputFilename(stamp: string): string {
   return `ok-claude-result-${stamp}.html`;
+}
+
+function getUsername(): string {
+  try {
+    const name = userInfo().username;
+    return name && name.length > 0 ? name : "you";
+  } catch {
+    return "you";
+  }
 }
 
 function outputDir(): string {
@@ -104,6 +113,7 @@ export async function run(): Promise<RunResult> {
       dateRange:
         minTs !== undefined && maxTs !== undefined ? [minTs, maxTs] : null,
       timestamp: stamp,
+      username: getUsername(),
     },
   });
 

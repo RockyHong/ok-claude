@@ -26,6 +26,7 @@ function extractData(html: string): {
     tokensOut: number;
     dateRange: [string, string] | null;
     timestamp: string;
+    username: string;
   };
 } {
   const m = html.match(/window\.__DATA__ = ({[\s\S]*?});/);
@@ -266,6 +267,14 @@ describe("pipeline.run — first-word cloud per role (F8)", () => {
     expect(source).not.toMatch(/events:\s*LogEvent\[\]/);
     expect(source).not.toMatch(/events\.push\(/);
     expect(source).not.toMatch(/\.join\("\\n"\)/);
+  });
+
+  it("includes a non-empty OS username in meta (or 'you' fallback)", async () => {
+    const result = await run();
+    const html = await readFile(result.outPath!, "utf8");
+    const data = extractData(html);
+    expect(typeof data.meta.username).toBe("string");
+    expect(data.meta.username.length).toBeGreaterThan(0);
   });
 
   it("threads a single timestamp into both the output filename and __DATA__.meta.timestamp", async () => {
