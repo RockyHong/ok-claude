@@ -1,6 +1,7 @@
 node_modules/
 dist/
 ok-claude-*.html
+*.tgz
 *.log
 .DS_Store
 scripts/
