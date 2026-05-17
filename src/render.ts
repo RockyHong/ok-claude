@@ -128,7 +128,7 @@ export function renderHtml(input: RenderInput): string {
   .hdr-top .dash { color: var(--ink-3); margin: 0 6px; }
   .hdr-bot {
     margin-top: 14px;
-    text-align: right;
+    text-align: center;
     font-family: 'Archivo Narrow', sans-serif;
     font-size: 22px;
     font-weight: 500;
@@ -162,8 +162,8 @@ export function renderHtml(input: RenderInput): string {
     text-transform: lowercase;
     letter-spacing: 0.01em;
   }
-  .labels .l { text-align: left; }
-  .labels .r { text-align: right; color: var(--ink-1); }
+  .labels .l { text-align: right; padding-right: 14px; }
+  .labels .r { text-align: left; padding-left: 14px; color: var(--ink-1); }
   .labels .n { color: var(--amber); font-weight: 700; }
 
   .halves {
