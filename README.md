@@ -1,7 +1,7 @@
 # OK Claude
 
 > Wordcloud of your Claude Code sessions.
-> See how often you really said `ok claude`.
+> Your top openers to Claude — `ok`, `y`, `go`, ya know.
 
 ```
 npx ok-claude
