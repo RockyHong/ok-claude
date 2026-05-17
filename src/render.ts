@@ -188,7 +188,7 @@ export function renderHtml(input: RenderInput): string {
     transform: translateX(-50%);
   }
   .half { position: relative; overflow: hidden; }
-  .half.claude { padding-left: 24px; }
+  .half.claude { padding-left: 14px; }
   .cv { width: 100%; height: 100%; display: block; }
 
   .footer {
