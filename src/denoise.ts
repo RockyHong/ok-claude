@@ -1,3 +1,18 @@
+// Pre-tokenize text cleanup. denoiseMarkdown(text) strips, in order:
+//   1. Fenced + unterminated ``` blocks
+//   2. 4-space-indented code blocks (CommonMark blank-line rule)
+//   3. Long structured single lines (≥200 dense chars OR 3+ "<word>": JSON keys)
+//   4. Non-fenced paste blocks (3+ consecutive stack-frame / type-error / dense lines)
+//   5. Inline `code` spans
+//   6. Stack frames embedded in prose
+//   7. URLs with scheme
+//   8. Windows absolute paths
+//   9. Path fragments with file extensions
+//   10. 3+ segment deep paths
+//   11. English clitics (n't, 's, 'd, 'm, 're, 've, 'll — straight + curly apostrophe)
+// Each regex carries a localized comment on its precision boundary. Contract
+// lives in denoise.test.ts. Runs before tokenize.
+
 const FENCED_BLOCK = /```[\s\S]*?```/g;
 const UNTERMINATED_FENCE = /```[\s\S]*$/;
 const INLINE_BACKTICK = /`[^`\n]*`/g;

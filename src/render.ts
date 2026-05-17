@@ -1,3 +1,24 @@
+// Emits the self-contained HTML artifact.
+//
+// Surfaces:
+//   - .artifact (1080×1080 design grid): dual-half wordcloud + tabloid header + footer
+//   - .chrome: DOWNLOAD + COPY action buttons + toast
+//   - Responsive scale: fitStage() computes --s on load + debounced resize
+//
+// Type tiers (Google Fonts):
+//   - UI: Anton (headline), Archivo Narrow (sub/labels/footer), JetBrains Mono (CTA)
+//   - Cloud: Inter 800 (canvas workhorse)
+// Warm-ink palette in :root (--paper / --ink-{1,2,3} / --amber / --rule).
+//
+// Vendored libs read once at module top:
+//   - wordcloud2.js   → window.WordCloud (canvas renderer)
+//   - html-to-image.js → window.htmlToImage (PNG export via unscaled clone)
+//
+// Cross-island safety: safeJson() rewrites </script before injection.
+// Boot order: whenFontsReady() → double-rAF first paint.
+// PNG filename pairs with HTML filename via meta.timestamp.
+// Per-half cloud opts + dimensions are inline below — contract via render.test.ts.
+
 import { readFileSync } from "node:fs";
 
 const VENDOR_JS = readFileSync(
