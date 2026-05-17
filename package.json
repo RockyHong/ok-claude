@@ -1,6 +1,6 @@
 {
   "name": "ok-claude",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Wordcloud of your Claude Code sessions. Your top openers — ok, y, go, ya know.",
   "author": "Rocky Hong",
   "keywords": ["claude-code", "wordcloud", "cli", "anthropic", "session-stats"],
