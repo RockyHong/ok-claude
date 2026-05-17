@@ -130,7 +130,7 @@ describe("renderHtml — tabloid header", () => {
     );
     expect(html).toMatch(/<div[^>]*class="hdr-top"/);
     expect(html).toMatch(/<div[^>]*class="hdr-bot"/);
-    expect(html).toContain("OK. CLAUDE");
+    expect(html).toMatch(/<span class="ok">ok\.<\/span> CLAUDE:/);
     expect(html).toContain("burned in");
     expect(html).toContain("avg");
     expect(html).toContain("/day");

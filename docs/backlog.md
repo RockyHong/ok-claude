@@ -33,21 +33,6 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 Pick on next session; decision likely influenced by F5 (`png-export`) timing — PNG export is canonical artifact; PNG fonts get baked at render time so online-fetch latency = export latency, OR PNG ships system-fallback if fonts hadn't loaded.
 
-### DEBT-007 — npm package name decision (`ok-claude` vs `ok.claude`) pending before F6 publish
-
-**Area:** `package.json` `name` field; brand wordmark in `src/render.ts` (`OK. CLAUDE` period-bound display); footer CTA copy (`npx ok-claude`); README install instructions; npm registry occupation.
-
-**Symptom:** Brand wordmark uses period (`OK. CLAUDE` — tabloid grammar locked DEBT-005-era). npm bin / install command uses hyphen (`npx ok-claude`). Both `ok.claude` and `ok-claude` 404 on registry (verified during F8 iteration). Pre-publish, no name committed.
-
-**Why it matters:** Ships at F6 (`npm-publish` in roadmap) — wrong call now = rename pain post-publish + broken share-loop links if early adopters install one and tool publishes as other.
-
-**Options:**
-1. **`ok-claude` only** (hyphen convention) — wordmark stays `OK. CLAUDE` for visual punch but install is `npx ok-claude`. Minor visual-to-install translation cost for viewer-to-installer. Most npm-idiomatic.
-2. **`ok.claude` primary + `ok-claude` shim** — claim both. Primary = period-matching wordmark (zero-translation viewer→install). Shim package redirects. Doubles maintenance + registry footprint; npm allows periods in names.
-3. **`ok-claude` only + drop period from wordmark** — `OK CLAUDE` instead of `OK. CLAUDE`. Loses period-as-tic (the brand pun's literal mechanical-comma — `ok claude, go` becomes `OK CLAUDE`, drops the prosody hit).
-
-Resolve before F6 publish kickoff. Likely (1) — period stays visual, install stays hyphen, viewers manage.
-
 ### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
 
 **Area:** `src/pipeline.ts` body-token tokenize-and-fold + per-side body-token `topN` call; `src/render.ts` panel slot + `paintPanel` (whatever F8 wire names it); `src/tokenize.ts` body-token consumer paths.

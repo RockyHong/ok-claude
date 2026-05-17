@@ -127,7 +127,7 @@ export function renderHtml(input: RenderInput): string {
     white-space: nowrap;
   }
   .hdr-top .num  { color: var(--amber); }
-  .hdr-top .dash { color: var(--ink-3); margin: 0 6px; }
+  .hdr-top .ok   { text-transform: lowercase; color: var(--ink-2); }
   .hdr-bot {
     margin-top: 14px;
     text-align: center;
@@ -268,7 +268,7 @@ export function renderHtml(input: RenderInput): string {
     <div class="stage">
       <div id="artifact" class="artifact">
         <div class="hdr-top">
-          OK. CLAUDE <span class="dash">&mdash;</span>
+          <span class="ok">ok.</span> CLAUDE:
           <span class="num">${burnedTxt}</span> burned in <span class="num">${daysTxt}</span>.
         </div>
         <div class="hdr-bot"><span class="handle">@${usernameTxt}</span> &middot; avg <span class="num">${perDayTxt}</span>/day.</div>
