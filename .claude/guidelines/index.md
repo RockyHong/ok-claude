@@ -1,12 +1,14 @@
-# Guidelines — Tier 1 Universal Cross-Repo Knowledge
+# Guidelines — Tier 1 Universal Cross-Repo Lore
 
-Two subcategories. Each holds principles served clone-copy to every consumer repo via `serve.sh`. Hard override on each pull; drift surfaces in `/resolve-claude-config`.
+Distilled universal principles. Cross-repo. Cold reference library.
 
 ## Contract
 
-- **Cold library.** Reference on demand. Never auto-wire — no glob stub, no harness attach.
-- **Read-only.** Semantic changes route via `/contribute` → `inbox/` at source. No ad-hoc direct edits.
-- **Override.** Local copies hard-overridden on every `/resolve-claude-config` run. Local edits get clobbered.
+- **Cold library.** Read on demand. Never auto-wired. No glob frontmatter, no harness attach. Path-glob firing belongs at the consumer rule layer (`.claude/rules/`), never on lore.
+- **Read-only at every consumer.** Includes this source repo. Lore is not edited in place.
+- **`/digest-inbox` is the sole authorized writer.** Semantic refinements flow `/contribute` → `inbox/` at source repo → `/digest-inbox` triage. No ad-hoc edits, no source-author bypass for content changes.
+- **Policy-establishing meta-changes** to this contract itself are the one direct-edit exception, and must declare the policy shift in the commit message.
+- **Override on serve.** Consumer copies hard-overridden on every `/resolve-claude-config` run. Local consumer edits get clobbered — they belong in `.claude/rules/` (consumer domain), not here.
 
 ## Categories
 
@@ -17,7 +19,9 @@ Two subcategories. Each holds principles served clone-copy to every consumer rep
 
 ## How to consume
 
-Consumer repos receive both subtrees via `bash serve.sh <target>/.claude/skills` (or any target). Files contain principle bodies only — no glob frontmatter, no annotations. Reference manually from `CLAUDE.md` or agent docs by path; no auto-load.
+Consumer repos receive both subtrees via `bash serve.sh <target>/.claude/skills` (or any target). Files contain principle bodies only — no glob frontmatter, no annotations.
+
+Reference manually from CLAUDE.md or agent docs by path. If auto-attach is desired for a particular moment, author a stub at `.claude/rules/<name>.md` with appropriate `globs:` that cites the lore by path. The stub is consumer-owned; the lore stays cold.
 
 ## Updates
 

@@ -119,7 +119,9 @@ Default order when context heavy: subagent → compact (warm) → clear (cold/to
 
 `.claude/rules/*.md` files attach to file reads via glob frontmatter — full-body rule fires at the decision moment, zero ambient cost when irrelevant. Summary below so this orchestrator knows the rule exists during planning.
 
-No rules seeded yet — no path-scoped enforcement need has surfaced for this CLI (no frontend component dir, no MV3 surface; co-located `*.test.ts` patterns already covered by `docs/techstack.md` § Coding Patterns). Add rule files under `.claude/rules/` when path-scoped patterns emerge (see `.claude/rules/index.md` for the add-rule recipe).
+- **`harness-editing`** — fires on reads of `CLAUDE.md`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`. Surfaces Tier 1 harness constraints (principle-only, cut test, positive phrasing, lore is cold-ref) + `/edit-harness` escalation pointer for non-trivial changes. Full body in [`.claude/rules/harness-editing.md`](.claude/rules/harness-editing.md).
+
+Add rule files under `.claude/rules/` when new path-scoped patterns emerge (see [`.claude/rules/index.md`](.claude/rules/index.md) for the add-rule recipe).
 
 If rule body needs more context than its summary provides during planning, read the rule file directly before designing — `Read .claude/rules/<name>.md`.
 

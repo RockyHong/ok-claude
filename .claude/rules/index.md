@@ -8,7 +8,9 @@
 
 ## Active rules
 
-None yet. CLI surface — no frontend component dir, no MV3 manifest, no migrations. Co-located `*.test.ts` patterns covered by `docs/techstack.md` § Coding Patterns (no path-scoped enforcement need). Add rules below as path-scoped patterns emerge.
+| Rule | Globs | Purpose |
+|---|---|---|
+| [`harness-editing`](harness-editing.md) | `CLAUDE.md`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**` | Surfaces Tier 1 harness constraints (principle-only, cut test, positive phrasing, lore is cold-ref) + `/edit-harness` escalation pointer for non-trivial changes. Served from upstream catalog (`.served` marker present). |
 
 ## Adding a new rule
 
