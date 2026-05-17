@@ -185,6 +185,7 @@ export function renderHtml(input: RenderInput): string {
   .divider {
     position: absolute; left: 50%; top: 0; bottom: 0;
     width: 2px; background: var(--ink-1);
+    transform: translateX(-50%);
   }
   .half { position: relative; overflow: hidden; }
   .half.user   { padding-right: 12px; }
