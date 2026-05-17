@@ -122,15 +122,17 @@ describe("renderHtml — tabloid header", () => {
   });
 });
 
-describe("renderHtml — footer + CTA", () => {
-  it("renders footer ed-line + monospace CTA inside .artifact (travels with PNG export)", () => {
+describe("renderHtml — footer CTA", () => {
+  it("renders single-line CTA inside .artifact — 'npx ok-claude # confess yours' (travels with PNG export)", () => {
     const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
     expect(html).toMatch(/<div[^>]*class="footer"/);
-    expect(html).toContain("vol. you");
+    // Old masthead bits dropped — footer is CTA-only.
+    expect(html).not.toContain("vol. you");
+    expect(html).not.toContain("441 sessions");
     expect(html).not.toContain("mechanical freq");
     expect(html).not.toContain("no llm");
-    expect(html).toContain("441 sessions");
-    expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*confess yours.*npx ok-claude/);
+    expect(html).toMatch(/<div[^>]*class="cta"[^>]*>[\s\S]*?npx ok-claude[\s\S]*?# confess yours/);
+    expect(html).toMatch(/<span[^>]*class="cmt"[^>]*>\s*# confess yours<\/span>/);
     const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<div[^>]*class="chrome"/);
     expect(artifactMatch?.[1]).toContain("footer");
     expect(artifactMatch?.[1]).toContain("cta");

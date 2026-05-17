@@ -63,8 +63,6 @@ export function renderHtml(input: RenderInput): string {
   const daysTxt = escapeHtml(`${days} days`);
   const perDayTxt = escapeHtml(`${fmtTokens(perDay)} tokens`);
   const msgCountTxt = escapeHtml(input.meta.messages.toLocaleString("en-US"));
-  const sessionsTxt = escapeHtml(input.meta.sessions.toLocaleString("en-US"));
-  const daysFooterTxt = escapeHtml(String(days));
 
   return `<!doctype html>
 <html lang="en">
@@ -186,12 +184,7 @@ export function renderHtml(input: RenderInput): string {
 
   .footer {
     margin-top: 14px;
-    display: flex; justify-content: space-between; align-items: baseline;
-    font-family: 'Archivo Narrow', sans-serif;
-    font-size: 14px;
-    color: var(--ink-2);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    display: flex; justify-content: center; align-items: baseline;
     border-top: 1px solid var(--ink-1);
     padding-top: 12px;
   }
@@ -199,11 +192,10 @@ export function renderHtml(input: RenderInput): string {
     font-family: 'JetBrains Mono', monospace;
     font-size: 16px;
     color: var(--ink-1);
-    text-transform: none;
-    letter-spacing: 0;
     font-weight: 700;
   }
   .footer .cta .chev { color: var(--amber); margin-right: 4px; }
+  .footer .cta .cmt { color: var(--ink-2); font-weight: 400; }
 
   .chrome {
     flex: 0 0 auto;
@@ -272,8 +264,7 @@ export function renderHtml(input: RenderInput): string {
         </div>
 
         <div class="footer">
-          <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions</div>
-          <div class="cta"><span class="chev">&#9656;</span>confess yours &mdash; npx ok-claude</div>
+          <div class="cta"><span class="chev">&#9656;</span>npx ok-claude<span class="cmt"> # confess yours</span></div>
         </div>
       </div>
     </div>
