@@ -65,7 +65,7 @@ Active development. v1 surface shipped — dual-half opener wordcloud, streaming
 | --- | --- |
 | `src/aggregate.ts` | Frequency Maps + top-N selection (token + opener tie-break rules). |
 | `src/cli.ts` | Entrypoint shebang. Runs pipeline, opens result HTML, writes status on empty/missing logs. |
-| `src/denoise.ts` | Pre-tokenize text cleanup — strips code / pastes / paths / URLs / clitics. See file header. |
+| `src/denoise.ts` | Pre-tokenize text cleanup — strips code / pastes / paths / URLs. See file header. |
 | `src/discover.ts` | Recursive scan of `~/.claude/projects/`. Returns sorted file list; ENOENT → `[]`; skips `/subagents/`. |
 | `src/openers.ts` | First-word opener extractor. Returns `{key, surface}` or null per text. |
 | `src/parse.ts` | JSONL line → LogEvent. Schema-driven prose gate; tolerant of unknown shapes. Schema reference: `docs/cc-log-schema.md`. |
@@ -89,7 +89,7 @@ discover.ts            (sorted {path, size}[] + totalBytes; ENOENT → [])
 stream.ts (readline)   ── onProgress(bytesDone, fileIdx) ─▶ progress.ts → stderr (TTY only)
         │
         ▼ (yield LogEvent per line; schema-driven drop-reason gate inside parseLine — see docs/cc-log-schema.md)
-denoise.ts             (strip fenced/indented/inline markdown code + pastes + paths + clitics per event)
+denoise.ts             (strip fenced/indented/inline markdown code + pastes + paths per event)
         │
         ▼
 pipeline.ts fold       firstOpener(text) → foldOpener(userOpeners | claudeOpeners)  (drives cloud)

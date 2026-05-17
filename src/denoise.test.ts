@@ -98,50 +98,48 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("y");
   });
 
-  it("normalizes 're clitic (we're → we)", () => {
-    expect(denoiseMarkdown("we're going")).toBe("we going");
+  it("preserves 're clitic whole (we're stays we're)", () => {
+    expect(denoiseMarkdown("we're going")).toBe("we're going");
   });
 
-  it("normalizes 's clitic (it's → it)", () => {
-    expect(denoiseMarkdown("it's fine")).toBe("it fine");
+  it("preserves 's clitic whole (it's stays it's)", () => {
+    expect(denoiseMarkdown("it's fine")).toBe("it's fine");
   });
 
-  it("normalizes n't clitic — strips full n't cluster (don't → do)", () => {
-    expect(denoiseMarkdown("don't worry")).toBe("do worry");
+  it("preserves n't contractions whole (don't stays don't)", () => {
+    expect(denoiseMarkdown("don't worry")).toBe("don't worry");
   });
 
-  it("normalizes n't clitic for won't (→ wo)", () => {
-    expect(denoiseMarkdown("won't happen")).toBe("wo happen");
+  it("preserves won't whole", () => {
+    expect(denoiseMarkdown("won't happen")).toBe("won't happen");
   });
 
-  it("normalizes n't clitic for can't (→ ca)", () => {
-    expect(denoiseMarkdown("can't tell")).toBe("ca tell");
+  it("preserves can't whole", () => {
+    expect(denoiseMarkdown("can't tell")).toBe("can't tell");
   });
 
-  it("normalizes n't clitic for isn't / wasn't / weren't / aren't (→ is/was/were/are)", () => {
+  it("preserves isn't / wasn't / weren't / aren't whole", () => {
     expect(denoiseMarkdown("isn't wasn't weren't aren't")).toBe(
-      "is was were are",
+      "isn't wasn't weren't aren't",
     );
   });
 
-  it("normalizes n't clitic for wouldn't / couldn't / shouldn't (→ would/could/should)", () => {
+  it("preserves wouldn't / couldn't / shouldn't whole", () => {
     expect(denoiseMarkdown("wouldn't couldn't shouldn't")).toBe(
-      "would could should",
+      "wouldn't couldn't shouldn't",
     );
   });
 
-  it("normalizes n't clitic for didn't / doesn't (→ did/does)", () => {
-    expect(denoiseMarkdown("didn't doesn't")).toBe("did does");
+  it("preserves didn't / doesn't whole", () => {
+    expect(denoiseMarkdown("didn't doesn't")).toBe("didn't doesn't");
   });
 
-  it("normalizes 'd / 'm / 've / 'll clitics", () => {
-    expect(denoiseMarkdown("I'd I'm I've I'll")).toBe("I I I I");
+  it("preserves 'd / 'm / 've / 'll contractions whole", () => {
+    expect(denoiseMarkdown("I'd I'm I've I'll")).toBe("I'd I'm I've I'll");
   });
 
-  it("normalizes curly apostrophe clitics (U+2019)", () => {
-    expect(denoiseMarkdown("we’re don’t it’s")).toBe(
-      "we do it",
-    );
+  it("preserves curly apostrophe contractions whole (U+2019)", () => {
+    expect(denoiseMarkdown("we’re don’t it’s")).toBe("we’re don’t it’s");
   });
 
   it("leaves bare apostrophes / quoted strings alone", () => {
@@ -150,8 +148,7 @@ describe("denoiseMarkdown", () => {
     expect(out).toContain("she said");
   });
 
-  it("does not strip clitic-looking suffix without leading letter", () => {
-    // "'re" with no preceding letter shouldn't be touched as clitic
+  it("leaves orphan clitic suffix untouched ('re alone stays 're alone)", () => {
     const out = denoiseMarkdown(" 're alone");
     expect(out).toContain("'re");
   });

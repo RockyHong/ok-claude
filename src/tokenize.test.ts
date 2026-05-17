@@ -68,11 +68,23 @@ describe("tokenize — short-Latin whitelist (GAP-009 D3)", () => {
   });
 });
 
-describe("tokenize — n't-clitic survivors (BUG-004)", () => {
-  it("drops `wo` (won't survivor) as stopword", () => {
-    expect(tokenize("wo happen later")).toEqual(["happen", "later"]);
+describe("tokenize — orphan clitic safety (GAP-014)", () => {
+  // ICU keeps contractions whole, but bare clitic suffixes ('re alone) split
+  // to multi-char fragments (re/ve/ll/nt). Length-1 filter catches s/d/m/t;
+  // STOPWORDS defends the rest.
+  it("drops orphan `re` fragment", () => {
+    expect(tokenize("re alone here")).toEqual(["alone", "here"]);
   });
-  it("drops `ca` (can't survivor) as stopword", () => {
-    expect(tokenize("ca tell now")).toEqual(["tell", "now"]);
+  it("drops orphan `ve` fragment", () => {
+    expect(tokenize("ve nothing left")).toEqual(["nothing", "left"]);
+  });
+  it("drops orphan `ll` fragment", () => {
+    expect(tokenize("ll later then")).toEqual(["later", "then"]);
+  });
+  it("drops orphan `nt` fragment", () => {
+    expect(tokenize("nt soon enough")).toEqual(["soon", "enough"]);
+  });
+  it("preserves whole contractions as single tokens", () => {
+    expect(tokenize("we're don't it's")).toEqual(["we're", "don't", "it's"]);
   });
 });

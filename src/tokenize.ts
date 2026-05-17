@@ -4,8 +4,10 @@ const STOPWORDS = new Set([
   "be", "by", "from", "if", "so", "not", "do", "does", "did", "have", "has",
   "had", "will", "would", "can", "could", "should", "just", "like", "get",
   "got",
-  // n't-clitic survivors (BUG-004): won't → "wo", can't → "ca"
-  "wo", "ca",
+  // Orphan clitic fragments (GAP-014): ICU keeps contractions whole, but a bare
+  // suffix like "'re alone" tokenizes its 2-char tail as "re". 1-char tails
+  // (s/d/m/t) caught by length-1 Latin filter below.
+  "nt", "re", "ve", "ll",
 ]);
 
 const CJK_SCRIPT =
