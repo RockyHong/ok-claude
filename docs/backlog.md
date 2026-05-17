@@ -33,22 +33,3 @@ Format per item: stable ID, short title, affected area, why it matters, proposed
 
 **Evidence to re-check on revisit:** Re-run opener-rank spike against a non-harness-biased user's logs to confirm tic-word buried pattern generalizes beyond solo dogfood corpus.
 
-### DEBT-006 — body-token strip path dropped from F8 UX (functional code still live; clean-up vs keep-latent decision pending)
-
-**Area:** `src/pipeline.ts` body-token tokenize-and-fold + per-side body-token `topN` call; `src/render.ts` panel slot + `paintPanel` (whatever F8 wire names it); `src/tokenize.ts` body-token consumer paths.
-
-**Symptom:** F8 mockup iteration dropped the bottom-strip "vocab" surface (per first-principle audit against `docs/overview.md` §Problem 30s-glance / §NN#7 meme-energy / §NN#6 two-axis spirit — strip failed every test, generic dev vocab `need / run / repo / skill` not unique-to-you punch). Cloud-only artifact ships. But pipeline still tokenizes body content + computes per-side top-N body-token frequencies that no surface consumes. Dead-data path post-F8 wire.
-
-**Why it matters:** Code that exists but isn't rendered = rot risk — slow drift, future contributor confusion ("why is body-token tokenize here?"), tiny per-event perf cost (fold against frequency Map for every token). Counter-argument for keeping latent: if §Problem ever re-frames toward analytical/reflection, or a new surface (different visual treatment, header sub-stat, etc) uses body-token freq, the data path is already there.
-
-**Decision deferred — monitor post-publish for restore signal:**
-- If any user begs for vocab list / "what words did I use most" within 2 release cycles → restore strip OR design alt surface using existing data path
-- If no demand → clean up (delete dead body-token tokenize/fold/topN paths, simplify pipeline to first-word-only)
-
-**If cleaning up later:**
-- Drop body-token tokenize fold from `pipeline.ts` (keep `firstOpener` fold only)
-- Drop `topN(userTokens, ...)` + `topN(claudeTokens, ...)` calls
-- Drop `panelUser` / `panelClaude` (or equivalent F8-wire names) from render-input shape
-- Drop `paintPanel` from `render.ts` if rendered
-- Verify `tokenize.ts` still needed (likely yes — `firstOpener` may depend on segmenter setup); audit imports
-

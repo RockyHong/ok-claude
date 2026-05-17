@@ -61,7 +61,7 @@ _Empty — pending post-publish user-signal feedback. New entries appear only wh
 
 | Path | Role |
 | --- | --- |
-| `src/aggregate.ts` | Frequency Maps + top-N selection (token + opener tie-break rules). |
+| `src/aggregate.ts` | Opener fold map + top-N selection (cluster-by-key, dominant-surface display, codepoint-asc tie-break). |
 | `src/cli.ts` | Entrypoint shebang. Runs pipeline, opens result HTML, writes status on empty/missing logs. |
 | `src/denoise.ts` | Pre-tokenize text cleanup — strips code / pastes / paths / URLs. See file header. |
 | `src/discover.ts` | Recursive scan of `~/.claude/projects/`. Returns sorted file list; ENOENT → `[]`; skips `/subagents/`. |
@@ -71,7 +71,6 @@ _Empty — pending post-publish user-signal feedback. New entries appear only wh
 | `src/progress.ts` | TTY-gated stderr progress bar. No-op when piped. |
 | `src/render.ts` | Emits self-contained HTML artifact + PNG-export chrome. See file header. |
 | `src/stream.ts` | Side-effect tier. Reads each `.jsonl` via `readline`, yields LogEvents through `parseLine`. |
-| `src/tokenize.ts` | `Intl.Segmenter` word tokenizer. Latin + CJK; short-Latin keep set + small stopword filter. |
 | `src/vendor/wordcloud2.js` | Vendored canvas wordcloud lib. Refresh policy: `src/vendor/README.md`. |
 | `src/vendor/html-to-image.js` | Vendored IIFE bundle for browser-side PNG export. Refresh policy: `src/vendor/README.md`. |
 
@@ -91,7 +90,6 @@ denoise.ts             (strip fenced/indented/inline markdown code + pastes + pa
         │
         ▼
 pipeline.ts fold       firstOpener(text) → foldOpener(userOpeners | claudeOpeners)  (drives cloud)
-                       tokenize(text) → userMap[token]++ / claudeMap[token]++         (latent, unused)
                        meta.messages++ ; meta.tokensIn / tokensOut += usage
                        meta.minTs / maxTs from event timestamps
         │
@@ -109,7 +107,7 @@ render.ts              (inlines vendor + topUser/topClaude + meta → self-conta
 
 Empty / missing logs root short-circuits at `discover.ts` — pipeline returns `{ outPath: null, reason }`; CLI writes the reason to stderr and exits without launching the browser.
 
-Memory ceiling under streaming = vocab `Map` size (bounded by unique tokens) plus a single in-flight line buffer. No whole-corpus arrays, no per-role joined strings — all-time scope (Non-Negotiable #4) ships without hitting the V8 `String` length cap.
+Memory ceiling under streaming = opener `Map` size (bounded by unique first-words) plus a single in-flight line buffer. No whole-corpus arrays, no per-role joined strings — all-time scope (Non-Negotiable #4) ships without hitting the V8 `String` length cap.
 
 ## Key Boundaries
 

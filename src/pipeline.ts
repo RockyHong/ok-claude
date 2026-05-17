@@ -7,7 +7,6 @@ import { execSync } from "node:child_process";
 import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
 import { denoiseMarkdown } from "./denoise.js";
-import { tokenize } from "./tokenize.js";
 import { foldOpener, topNOpeners, type OpenerMap } from "./aggregate.js";
 import { firstOpener } from "./openers.js";
 import { renderHtml } from "./render.js";
@@ -93,10 +92,6 @@ export async function run(): Promise<RunResult> {
   const totalBytes = files.reduce((s, f) => s + f.size, 0);
   const progress = createProgress(totalBytes, files.length);
 
-  // Body-token folds stay live per DEBT-006 (restore-bait for vocab-axis revival).
-  // Output unused by F8 render; first-word folds drive both clouds.
-  const userMap = new Map<string, number>();
-  const claudeMap = new Map<string, number>();
   const userOpeners: OpenerMap = new Map();
   const claudeOpeners: OpenerMap = new Map();
   let messages = 0;
@@ -110,10 +105,6 @@ export async function run(): Promise<RunResult> {
     const op = firstOpener(denoised);
     if (op) {
       foldOpener(e.role === "user" ? userOpeners : claudeOpeners, op);
-    }
-    const map = e.role === "user" ? userMap : claudeMap;
-    for (const tok of tokenize(denoised)) {
-      map.set(tok, (map.get(tok) ?? 0) + 1);
     }
     messages++;
     if (typeof e.tokensIn === "number") tokensIn += e.tokensIn;

@@ -1,4 +1,4 @@
-// Pre-tokenize text cleanup. denoiseMarkdown(text) strips, in order:
+// Pre-opener text cleanup. denoiseMarkdown(text) strips, in order:
 //   1. Fenced + unterminated ``` blocks
 //   2. 4-space-indented code blocks (CommonMark blank-line rule)
 //   3. Long structured single lines (≥200 dense chars OR 3+ "<word>": JSON keys)
@@ -10,12 +10,11 @@
 //   9. Path fragments with file extensions
 //   10. 3+ segment deep paths
 // Each regex carries a localized comment on its precision boundary. Contract
-// lives in denoise.test.ts. Runs before tokenize.
+// lives in denoise.test.ts. Runs before opener extraction.
 //
 // Contractions (don't / we're / it's / I'll …) are NOT stripped — ICU
-// Segmenter keeps them as whole word-like segments. Bare orphan suffixes
-// ('re alone → 're tokenizes to "re") are dropped downstream via tokenize.ts
-// STOPWORDS + length-1 Latin filter.
+// Segmenter inside openers.ts keeps them as whole word-like segments. Bare
+// orphan suffixes ('re alone → 're) drop via openers.ts short-Latin filter.
 
 const FENCED_BLOCK = /```[\s\S]*?```/g;
 const UNTERMINATED_FENCE = /```[\s\S]*$/;
