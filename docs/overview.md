@@ -53,9 +53,7 @@ Active development. v1 surface shipped — dual-half opener wordcloud, streaming
 
 > Forward feature list — ordered name + one-liner per feature. Single pillar for "what product will become." `/super-bootstrap:todo` reads this section: first unstarted entry (no matching spec slug under `docs/superpowers/specs/` or `docs/specs/`) surfaces as the next `Brainstorm:` row. Entries stay until the feature ships into the product narrative above; remove on ship via doc-sync.
 
-| ID | Slug                  | Title                                              | Rationale                                                                |
-| -- | --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| F7 | `sentence-frequency`  | Sentence tokenization + sentence-cloud             | Second surface inside the same two-tab frame.                            |
+_Empty — pending post-publish user-signal feedback. New entries appear only when a real user request or share-funnel gap surfaces evidence that passes the § Non-Negotiables cut test._
 
 ## Module Index
 
