@@ -162,7 +162,7 @@ export function renderHtml(input: RenderInput): string {
     text-transform: lowercase;
     letter-spacing: 0.01em;
   }
-  .labels .l { text-align: right; padding-right: 14px; }
+  .labels .l { text-align: left; }
   .labels .r { text-align: left; padding-left: 14px; color: var(--ink-1); }
   .labels .n { color: var(--amber); font-weight: 700; }
 
