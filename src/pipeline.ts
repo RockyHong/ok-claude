@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { statSync } from "node:fs";
 import { homedir, userInfo } from "node:os";
 import { join, resolve } from "node:path";
+import { execSync } from "node:child_process";
 
 import { discoverLogs, logsRoot } from "./discover.js";
 import { streamEvents } from "./stream.js";
@@ -25,13 +26,45 @@ function outputFilename(stamp: string): string {
   return `ok-claude-result-${stamp}.html`;
 }
 
-function getUsername(): string {
+const GENERIC_OS_USERNAMES = /^(user|administrator|admin|default(\s|-)?user|root|nobody)$/i;
+
+function slugName(raw: string): string {
+  return raw
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function tryGitName(): string | null {
+  try {
+    const out = execSync("git config --get user.name", {
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 1000,
+    })
+      .toString()
+      .trim();
+    if (!out) return null;
+    const slug = slugName(out);
+    return slug.length > 0 ? slug : null;
+  } catch {
+    return null;
+  }
+}
+
+function tryOsName(): string | null {
   try {
     const name = userInfo().username;
-    return name && name.length > 0 ? name : "you";
+    if (!name || GENERIC_OS_USERNAMES.test(name)) return null;
+    const slug = slugName(name);
+    return slug.length > 0 ? slug : null;
   } catch {
-    return "you";
+    return null;
   }
+}
+
+function getUsername(): string {
+  return tryGitName() ?? tryOsName() ?? "you";
 }
 
 function outputDir(): string {

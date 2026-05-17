@@ -210,12 +210,10 @@ export function renderHtml(input: RenderInput): string {
   .footer .byline {
     grid-column: 3;
     justify-self: end;
-    font-family: 'Archivo Narrow', sans-serif;
-    font-size: 11px;
-    font-style: italic;
-    color: var(--ink-3);
-    letter-spacing: 0.02em;
-    text-transform: lowercase;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--ink-2);
+    font-weight: 400;
     white-space: nowrap;
   }
 
