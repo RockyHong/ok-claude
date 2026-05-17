@@ -127,10 +127,10 @@ describe("renderHtml — footer + CTA", () => {
     const html = renderHtml(input({ meta: { sessions: 441, messages: 11629, tokensIn: 0, tokensOut: 0, dateRange: null, timestamp: "2026-05-16-1234" } }));
     expect(html).toMatch(/<div[^>]*class="footer"/);
     expect(html).toContain("vol. you");
-    expect(html).toContain("mechanical freq");
-    expect(html).toContain("no llm");
+    expect(html).not.toContain("mechanical freq");
+    expect(html).not.toContain("no llm");
     expect(html).toContain("441 sessions");
-    expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*npx ok-claude/);
+    expect(html).toMatch(/<div[^>]*class="cta"[^>]*>.*confess yours.*npx ok-claude/);
     const artifactMatch = html.match(/<div[^>]*id="artifact"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<div[^>]*class="chrome"/);
     expect(artifactMatch?.[1]).toContain("footer");
     expect(artifactMatch?.[1]).toContain("cta");

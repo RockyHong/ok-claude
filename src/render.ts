@@ -272,8 +272,8 @@ export function renderHtml(input: RenderInput): string {
         </div>
 
         <div class="footer">
-          <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions &middot; mechanical freq &middot; no llm</div>
-          <div class="cta"><span class="chev">&#9656;</span>npx ok-claude</div>
+          <div>vol. you &middot; ed. ${daysFooterTxt}d &middot; ${sessionsTxt} sessions</div>
+          <div class="cta"><span class="chev">&#9656;</span>confess yours &mdash; npx ok-claude</div>
         </div>
       </div>
     </div>
