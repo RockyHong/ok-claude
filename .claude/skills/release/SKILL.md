@@ -116,7 +116,9 @@ Use annotated tag. Pass message via HEREDOC.
 
 > Release v{version} prepared.
 > To push tag: `git push origin master --tags`
-> To ship to npm: `npm publish` (add `--otp=<code>` if 2FA enabled on your npm account)
+> To ship to npm:
+>   1. `npm whoami` — confirms logged in. If 401, run `npm login` (use `--auth-type=web` if it stalls).
+>   2. `npm publish` (add `--otp=<code>` if 2FA enabled on your npm account)
 
 ## Rules
 
