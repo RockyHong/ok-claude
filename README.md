@@ -3,7 +3,7 @@
 > Wordcloud of your Claude Code sessions.
 > Your top openers to Claude — `ok`, `y`, `go`, ya know.
 
-![OK Claude demo wordcloud](docs/demo.png)
+![OK Claude demo wordcloud](https://raw.githubusercontent.com/RockyHong/ok-claude/HEAD/docs/demo.png)
 
 ```
 npx ok-claude
